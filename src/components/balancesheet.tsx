@@ -59,7 +59,7 @@ export function DebitCreditCards() {
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
-            <SelectLabel>Fruits</SelectLabel>
+            <SelectLabel></SelectLabel>
             <SelectItem value="debit">Debit</SelectItem>
             <SelectItem value="credit">Credit</SelectItem>
           </SelectGroup>
