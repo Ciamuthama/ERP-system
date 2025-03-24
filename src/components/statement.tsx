@@ -1,272 +1,239 @@
 "use client";
 
-import * as React from "react";
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import { data } from "@/app/data";
-import { ChevronDown, MoreHorizontal } from "lucide-react";
-
+import React, { useState } from "react";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { DetailView } from "./modal/viewdetails";
-import { Member } from "@/lib/types";
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+} from "@/components/ui/form";
+import { getSingleMember } from "@/lib/actions";
 
-export const columns: ColumnDef<Member>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "branchName",
-    header:"Branch Name"
-    
-   },
-   {
-      accessorKey: "employerName",
-      header: "Employer Name",
-      
-     },
-   {
-      accessorKey: "fullName",
-      header: "FullName",
-      
-     },
-   {
-      accessorKey: "memId",
-      header: "Member ID",
-     
-     },
-   {
-      accessorKey: "memberNo",
-      header: "Member No",
-      accessorFn: (data) => data.memberNo?.toString() || "",
-     },
-   {
-      accessorKey: "payrollNo",
-      header: "Payroll No",
-    
-     },
-   {
-      accessorKey: "salaryAccount",
-      header: "Salary Account",
-      accessorFn: (data) => data.salaryAccount?.toString() || "",
-     },
+const formSchema = z.object({
+  accountNumber: z.string().min(8, "Account number is required"),
+  memberName: z.string().min(1, "Member name is required"),
+  memberNo: z.string().optional(),
+  transactionDate: z.string().min(1, "Transaction date is required"),
+  transactionType: z.string().min(1, "Transaction type is required"),
+  loanAmount: z.string().min(1, "Loan amount is required"),
+  loanBalance: z.string().min(1, "Loan balance is required"),
+  savings: z.string().optional(),
+  withdrawable: z.string().optional(),
+  shares: z.string().optional(),
+  description: z
+    .string()
+    .optional()
    
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row}) => {
-      const memberNo = row.original.memberNo
-      
-      
-   
+});
 
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DetailView memberNo={memberNo}/>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem><button type="button" onClick={()=> window.print()}>Print statement</button> </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-];
+export default function FosaStatementForm() {
+  const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
-export function Statement() {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
-
-  const table = useReactTable({
-    data,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      accountNumber: "",
+      memberName: "",
+      memberNo:"",
+      transactionDate: "",
+      transactionType: "",
+      loanAmount: "",
+      loanBalance: "",
+      savings: "", 
+      withdrawable: "",
+      shares: "", 
+      description: "",
     },
   });
 
+  async function searchMember() {
+    if (!searchQuery) return;
+    setLoading(true);
+
+    try {
+      // Check FOSA statements first
+      const res = await fetch(`/api/fosa?memberNo=${searchQuery}`);
+      const data = await res.json();
+      console.log("FOSA API Response:", data);
+
+      if (res.ok && data.length > 0) {
+        form.reset({
+        memberNo:searchQuery ||"", 
+          accountNumber: data[0].accountNumber || "",
+          memberName: data[0].memberName || "",
+          transactionDate: data[0].transactionDate || "",
+          transactionType: data[0].transactionType || "",
+          loanAmount: data[0].loanAmount?.toString() || "",
+          loanBalance: data[0].loanBalance?.toString() || "",
+          savings: data[0].savings?.toString() || "",
+          withdrawable: data[0].withdrawable?.toString() || "",
+          shares: data[0].shares?.toString() || "",
+          description: data[0].description || "",
+        });
+      } else {
+        // If not found, check in members
+        const memberData = await getSingleMember(searchQuery);
+        console.log("Member API Response:", memberData);
+
+        if (memberData && Object.keys(memberData).length > 0) {
+          form.reset({
+            memberNo:searchQuery ||"",
+            accountNumber: memberData.accountNumber || "", // ✅ Corrected from "fosaAccountNo"
+            memberName: memberData.fullName || "", // ✅ Assuming "fullName" should be "memberName"
+            transactionDate: "", // Keep empty since it's a new transaction
+            transactionType: "",
+            loanAmount: "0",
+            loanBalance: "0", // ✅ Corrected from "balance"
+            savings: "0", // ✅ Added because it's in DB
+            withdrawable: "0", // ✅ Added because it's in DB
+            shares: "0", // ✅ Added because it's in DB
+            description: "",
+          });
+        } else {
+          alert("Member not found.");
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching member data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const onSubmit = async (data: any) => {
+    try {
+      console.log("Raw Submitted Data:", data); // Debugging log
+
+      // Ensure transactionDate is properly formatted
+      let transactionDate = data.transactionDate
+        ? new Date(data.transactionDate)
+        : null;
+
+      if (!transactionDate || isNaN(transactionDate.getTime())) {
+        alert("Invalid transaction date. Please select a valid date.");
+        return;
+      }
+
+      // Convert to MySQL format (YYYY-MM-DD)
+      transactionDate = transactionDate.toISOString().split("T")[0];
+
+      const payload = {
+        ...data,
+        transactionDate, // ✅ Correctly formatted
+      };
+
+      console.log("Final Payload:", payload); // Debugging log
+
+      const response = await fetch("/api/fosa", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const responseData = await response.json();
+      console.log("Server Response:", responseData);
+
+      if (!response.ok) {
+        throw new Error(responseData.error || "Failed to submit form");
+      }
+
+      console.log("Form submitted successfully!");
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    }
+  };
+
   return (
-    <div className="w-full">
-      <div className="flex items-center py-4">
+    <div className="w-[70vw]">
+      <h3 className="font-semibold text-center">FOSA Statement</h3>
+
+      {/* Search Input */}
+      <div className="flex gap-2 mb-5 w-[30rem]">
         <Input
-          placeholder="Search with member number..."
-          value={(table.getColumn("memberNo")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("memberNo")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
+          type="text"
+          placeholder="Search Member Number"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns <ChevronDown />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button onClick={searchMember} disabled={loading}>
+          {loading ? "Searching..." : "Search"}
+        </Button>
       </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+
+
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
+          <div className="grid grid-cols-3 gap-3 px-5 w-full">{Object.keys(formSchema.shape).map((field) =>
+            field !== "description" ? (
+              <FormField
+                key={field}
+                control={form.control}
+                name={field}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {field.name.replace(/([A-Z])/g, " $1").trim().toLocaleUpperCase()}
+                    </FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
+              <div key={"1"}>
+                <FormField
+                  key="description"
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description (Optional)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          placeholder="Enter description (at least 5 characters)"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                {/* <FormField
+                  control={form.control}
+                  name="transactionDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Transaction Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                /> */}
+              </div>
+            )
+          )}</div>
+          <Button type="submit" disabled={loading}>
+            {loading ? "Saving..." : "Save"}
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+          {successMessage && (
+            <p className="text-green-600 mt-2">{successMessage}</p>
+          )}
+        </form>
+      </Form>
     </div>
   );
 }

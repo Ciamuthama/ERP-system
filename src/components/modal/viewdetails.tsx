@@ -13,20 +13,6 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-
-const formSchema = z.object({
-  branchCode: z.union([z.string(), z.number()]),
-  branchName: z.string(),
-  employerCode: z.union([z.string(), z.number()]),
-  employerName: z.string(),
-  fullName: z.string(),
-  memId: z.union([z.number(), z.string()]),
-  memberNo: z.union([z.string(), z.number()]),
-  payrollNo: z.union([z.string(), z.number()]),
-  salaryAccount: z.union([z.string(), z.number()]),
-  statusCode: z.union([z.string(), z.number()]),
-  statusName: z.string(),
-});
 import {
   Drawer,
   DrawerClose,
@@ -36,36 +22,93 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { data } from "@/app/data";
+import { getSingleMember } from "@/lib/actions";
 
-export function DetailView({ memberNo }: { memberNo: string | number }) {
-  const user = memberNo
-    ? data.find((item) => item.memberNo === memberNo)
-    : data;
+const formSchema = z.object({
+  id: z.string(), // ✅ ID is optional (not required for validation)
+  memberNo: z.string(),
+  memId: z.string().min(3, "ID Number is required"),
+  fullName: z.string().min(3, "Full name is required"),
+  telephone: z.string().min(10, "Enter a valid phone number"),
+  emailAddress: z.string().email("Enter a valid email"),
+  title: z.string().optional(),
+  accountNumber: z.string(),
+});
+
+export function DetailView({ id }: { id: string }) {
+  const [user, setUser] = React.useState<z.infer<typeof formSchema> | null>(
+    null
+  );
+
+  React.useEffect(() => {
+    if (id) {
+      getSingleMember(id).then((data) => {
+        setUser(data);
+      });
+    }
+  }, [id]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      branchCode: "",
-      branchName: !Array.isArray(user) ? user?.branchName :"",
-      employerCode: "",
-      employerName: !Array.isArray(user) ? user?.employerName : "",
-      fullName: !Array.isArray(user) ? user?.fullName : "",
-      memId: "",
-      memberNo: !Array.isArray(user) ? user?.memberNo :"",
-      payrollNo: "",
-      salaryAccount:!Array.isArray(user) ?  user?.salaryAccount :"",
-      statusCode: "",
-      statusName: !Array.isArray(user) ? user?.statusName :"",
+      id: user?.id || "",
+      memberNo: user?.memberNo || "",
+      memId: user?.memId || "",
+      fullName: user?.fullName || "",
+      telephone: user?.telephone || "",
+      emailAddress: user?.emailAddress || "",
+      title: user?.title || "",
+      accountNumber: user?.accountNumber || "",
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+  async function updateMember(id: string, data: unknown) {
+    try {
+      const response = await fetch(`/api/members/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update member: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating member:", error);
+      throw error;
+    }
+  }
+
+  React.useEffect(() => {
+    if (user) {
+      form.reset(user);
+    }
+  }, [user, form]);
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log("Submitting form with values:", values); // Debugging log
+
+    if (!values.id) {
+      console.error("No member number provided");
+      return;
+    }
+
+    try {
+      const updatedMember = await updateMember(values.id, values);
+      console.log("Member updated successfully:", updatedMember);
+      alert("Member updated successfully!");
+    } catch (error) {
+      console.error("Error updating member:", error);
+      alert("Failed to update member.");
+    }
   }
 
   return (
-    <Drawer direction="right" >
+    <Drawer direction="right">
       <DrawerTrigger asChild>
         <h3 className="focus:bg-accent focus:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=destructive]:focus:text-destructive data-[variant=destructive]:*:[svg]:!text-destructive [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
           Edit Details
@@ -77,87 +120,88 @@ export function DetailView({ memberNo }: { memberNo: string | number }) {
             <DrawerTitle>Edit Member</DrawerTitle>
           </DrawerHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 px-5">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-4 px-5"
+            >
+              <FormField
+                control={form.control}
+                name="id"
+                render={({ field }) => (
+                  <FormItem hidden>
+                    <FormLabel>ID</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              {/* Full Name */}
               <FormField
                 control={form.control}
                 name="fullName"
-                render={({field}) => (
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>FullName</FormLabel>
+                    <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                      <Input
-                         {...field}
-                      />
+                      <Input {...field} />
                     </FormControl>
                   </FormItem>
                 )}
               />
+
+              {/* Member Number (Read-Only) */}
               <FormField
                 control={form.control}
                 name="memberNo"
-                render={({field}) => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Member Number</FormLabel>
                     <FormControl>
-                      <Input
-                       {...field}
-                      />
+                      <Input {...field} readOnly />
                     </FormControl>
                   </FormItem>
                 )}
               />
+
+              {/* Telephone */}
               <FormField
                 control={form.control}
-                name="branchName"
-                render={({field}) => (
+                name="telephone"
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Branch Name</FormLabel>
+                    <FormLabel>Telephone</FormLabel>
                     <FormControl>
-                      <Input
-                       {...field}
-                      />
+                      <Input {...field} />
                     </FormControl>
                   </FormItem>
                 )}
               />
+
+              {/* Email Address */}
               <FormField
                 control={form.control}
-                name="employerName"
-                render={({field}) => (
+                name="emailAddress"
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Employer Name</FormLabel>
+                    <FormLabel>Email Address</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                      />
+                      <Input {...field} />
                     </FormControl>
                   </FormItem>
                 )}
               />
+
+              {/* Account Number (Read-Only) */}
               <FormField
                 control={form.control}
-                name="salaryAccount"
-                render={({field}) => (
+                name="accountNumber"
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Salary Account</FormLabel>
+                    <FormLabel>Account Number</FormLabel>
                     <FormControl>
-                      <Input
-                         {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="statusName"
-                render={({field}) => (
-                  <FormItem>
-                    <FormLabel>Member Status</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                      />
+                      <Input {...field} readOnly />
                     </FormControl>
                   </FormItem>
                 )}
@@ -167,7 +211,6 @@ export function DetailView({ memberNo }: { memberNo: string | number }) {
             </form>
           </Form>
           <DrawerFooter>
-         
             <DrawerClose asChild>
               <Button variant="outline">Cancel</Button>
             </DrawerClose>

@@ -1,13 +1,11 @@
-import FosaStatementForm from '@/components/statement'
+import Settings from '@/components/settings'
 import { NextPage } from 'next'
 
 
 const Page: NextPage = ({}) => {
   return(
-
-      <FosaStatementForm/>
+    <Settings/>
   )
-  
 }
 
 export default Page

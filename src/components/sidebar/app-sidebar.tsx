@@ -19,8 +19,8 @@ const items = [
     icon: Home,
   },
   {
-    title: "Statements",
-    url: "/statement",
+    title: "register",
+    url: "/register",
     icon: Inbox,
   },
   {
@@ -34,8 +34,14 @@ const items = [
     icon: Search,
   },
   {
+title:"Statement",
+url:"/statement",
+icon: Inbox
+
+  },
+  {
     title: "Settings",
-    url: "#",
+    url: "/setting",
     icon: Settings,
   },
 ]
