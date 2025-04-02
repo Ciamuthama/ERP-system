@@ -1,6 +1,6 @@
 "use server";
 import pool from "./db";
-import { Member } from "./types";
+
 
 export async function getUsers() {
   try {
@@ -8,7 +8,7 @@ export async function getUsers() {
     return rows;
   } catch (error) {
     console.error("Database error:", error);
-    throw new Error("Failed to fetch users");
+    //throw new Error("Failed to fetch users");
   }
 }
 
@@ -18,18 +18,18 @@ export async function getMember() {
         return rows
     } catch (error) {
         console.error("Database error:", error);
-        throw new Error("Failed to fetch members");
+        //throw new Error("Failed to fetch members");
     }
     
 }
 
-export async function getSingleMember(id: string) {
+export async function getSingleMember(memberNo: string) {
     try {
-        const [rows] = await pool.query("SELECT * FROM members WHERE id = ?", [id]);
+        const [rows] = await pool.query("SELECT * FROM members WHERE memberNo = ?", [memberNo]);
         return rows.length ? rows[0] : null;
     } catch (error) {
         console.error("Database error:", error);
-        throw new Error("Failed to fetch member");
+        //throw new Error("Failed to fetch member");
     }
 }
 
@@ -40,7 +40,18 @@ export async function getSaccoSettings(){
     return rows
 } catch (error) {
     console.error("Database error:", error);
-    throw new Error("Failed to fetch members");
+    //throw new Error("Failed to fetch members");
 }
 }
+
+export async function getDNC(){
+  try{
+    const [rows] = await pool.query("SELECT * FROM dnc")
+    return rows
+} catch (error) {
+    console.error("Database error:", error);
+    //throw new Error("Failed to fetch members");
+}
+}
+
 

@@ -1,4 +1,4 @@
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react"
+import { Home,  Settings, BookUser, FileStack, WalletCards,Landmark,PrinterCheck    } from "lucide-react";
 
 import {
   Sidebar,
@@ -9,46 +9,50 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 // Menu items.
 const items = [
   {
     title: "Home",
-    url: "/",
+    url: "/dashboard",
     icon: Home,
   },
   {
-    title: "register",
+    title: "Member Manager",
+    url: "/member",
+    icon: BookUser,
+  },
+  {
+    title: "Register",
     url: "/register",
-    icon: Inbox,
+    icon: FileStack ,
   },
   {
     title: "Debit/Credit Note",
     url: "/balance",
-    icon: Calendar,
+    icon: WalletCards,
   },
   {
     title: "Chart of Account",
     url: "/cfa",
-    icon: Search,
+    icon: Landmark,
   },
   {
-title:"Statement",
-url:"/statement",
-icon: Inbox
-
+    title: "Statement",
+    url: "/statement",
+    icon: PrinterCheck,
   },
   {
     title: "Settings",
     url: "/setting",
     icon: Settings,
   },
-]
+];
 
 export function AppSidebar() {
   return (
-    <Sidebar collapsible="icon" >
+    <Sidebar collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
@@ -58,7 +62,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <a href={item.url}>
-                      <item.icon className="!size-4.5"/>
+                      <item.icon className="!size-4.5" />
                       <span>{item.title}</span>
                     </a>
                   </SidebarMenuButton>
@@ -69,5 +73,5 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
-  )
+  );
 }

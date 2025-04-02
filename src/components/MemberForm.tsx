@@ -13,12 +13,7 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const formSchema = z.object({
   memberNo: z.string().optional(),
@@ -28,12 +23,13 @@ const formSchema = z.object({
   emailAddress: z.string().email("Enter a valid email"),
   title: z.string().optional(),
   accountNumber: z.string().optional(),
+  openingBalance: z.string().optional(),
 });
 
 export default function MemberForm() {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-  const [memberNo, setMemberNo] = useState("");
+  const [memberNo, setMemberNo] = useState("1001");
   const [accountNumber, setAccountNumber] = useState("");
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -46,6 +42,7 @@ export default function MemberForm() {
       telephone: "",
       emailAddress: "",
       accountNumber: "",
+      openingBalance: "",
     },
   });
 
@@ -84,7 +81,9 @@ export default function MemberForm() {
 
       if (response.ok) {
         const data = await response.json();
-        setSuccessMessage(`Member created! Member No: ${data.memberNo}, Account No: ${data.accountNumber}`);
+        setSuccessMessage(
+          `Member created! Member No: ${data.memberNo}, Account No: ${data.accountNumber}`
+        );
         form.reset();
         setAccountNumber("");
       } else {
@@ -98,75 +97,134 @@ export default function MemberForm() {
   }
 
   return (
-    <div className="mt-5">
-      <Card>
-        <CardHeader>
-          <CardTitle>Create New Member</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 px-5 grid grid-cols-2 gap-3">
-                <FormItem>
-                  <FormLabel>Member Number</FormLabel>
+    <>
+      {loading ? (
+        <p className="loading"></p>
+      ) : (
+        <div className="mt-5 mx-auto">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-center underline">
+                Create New Member
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-8 px-5 grid grid-cols-2 gap-3"
+                >
+                  <FormItem>
+                    <FormLabel>Member Number</FormLabel>
                     <Input value={memberNo} readOnly />
-                </FormItem>
-              <FormField control={form.control} name="memId" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>ID Number</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="fullName" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="telephone" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Telephone Number</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="emailAddress" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email Address</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="title" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                </FormItem>
-              )} />
-              <div>
-                <FormLabel>Account Number</FormLabel>
-                <div className="flex items-center gap-3">
-                  <Input value={accountNumber} disabled />
-                  <Button type="button" onClick={generateAccountNumber}>Generate</Button>
-                </div>
-              </div>
-              <div className="col-span-2">
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Saving..." : "Save"}
-                </Button>
-                {successMessage && <p className="text-green-600 mt-2">{successMessage}</p>}
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
+                  </FormItem>
+                  <FormField
+                    control={form.control}
+                    name="memId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>ID Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Title</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="fullName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="telephone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Telephone Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="emailAddress"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email Address</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <div>
+                    <FormLabel className="mb-2">Account Number</FormLabel>
+                    <div className="flex items-center gap-3">
+                      <Input value={accountNumber} disabled />
+                      <Button type="button" onClick={generateAccountNumber}>
+                        Generate
+                      </Button>
+                    </div>
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="openingBalance"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Opening Balance</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={new Intl.NumberFormat().format(
+                              Number(field.value.replace(/,/g, "")) || 0
+                            )}
+                            onChange={(e) => {
+                              const rawValue = e.target.value.replace(/,/g, ""); // Remove commas
+                              if (/^\d*$/.test(rawValue)) {
+                                // Ensure only numbers
+                                field.onChange(rawValue);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <div className="col-span-2">
+                    <Button type="submit" disabled={loading}>
+                      {loading ? "Saving..." : "Save"}
+                    </Button>
+                    {successMessage && (
+                      <p className="text-green-600 mt-2">{successMessage}</p>
+                    )}
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </>
   );
 }

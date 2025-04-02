@@ -13,7 +13,6 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { data } from "@/app/data";
 import { ChevronDown, MoreHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -65,39 +63,41 @@ export const columns: ColumnDef<Member>[] = [
   },
   {
     accessorKey: "memberNo",
-    header:"Member No"
-    
-   },
-   {
-      accessorKey: "fullName",
-      header: "Full Name",
-      
-     },
-   {
-      accessorKey: "accountNumber",
-      header: "Account Number",
-      
-     },
-   {
-      accessorKey: "memId",
-      header: "Member ID",
-     
-     },
-   {
-      accessorKey: "telephone",
-      header: "Telephone",
-    
-     },
-  
-   
+    header: "Member No",
+  },
+  {
+    accessorKey: "fullName",
+    header: "Full Name",
+  },
+  {
+    accessorKey: "accountNumber",
+    header: "Account Number",
+  },
+  {
+    accessorKey: "memId",
+    header: "Member ID",
+  },
+  {
+    accessorKey: "telephone",
+    header: "Telephone",
+  },
+  {
+    accessorKey: "openingBalance",
+    header: "Opening Balance",
+    cell: ({ getValue }) => {
+      const value = Number(getValue());
+      const formattedValue = new Intl.NumberFormat("en-KE", {
+        style: "currency",
+        currency: "KES",
+      }).format(value);
+      return formattedValue;
+    },
+  },
   {
     id: "actions",
     enableHiding: false,
-    cell: ({ row}) => {
-      const id = row.original.id
-      
-      
-   
+    cell: ({ row }) => {
+      const memberNo = row.original.memberNo;
 
       return (
         <DropdownMenu>
@@ -109,9 +109,8 @@ export const columns: ColumnDef<Member>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DetailView id={id}/>
+            <DetailView memberNo={memberNo} />
             <DropdownMenuSeparator />
-            <DropdownMenuItem><button type="button" onClick={()=> window.print()}>Print statement</button> </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -119,7 +118,7 @@ export const columns: ColumnDef<Member>[] = [
   },
 ];
 
-export function Statement() {
+export function Register() {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []

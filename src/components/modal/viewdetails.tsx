@@ -25,34 +25,30 @@ import {
 import { getSingleMember } from "@/lib/actions";
 
 const formSchema = z.object({
-  id: z.string(), // ✅ ID is optional (not required for validation)
-  memberNo: z.string(),
   memId: z.string().min(3, "ID Number is required"),
   fullName: z.string().min(3, "Full name is required"),
   telephone: z.string().min(10, "Enter a valid phone number"),
   emailAddress: z.string().email("Enter a valid email"),
   title: z.string().optional(),
-  accountNumber: z.string(),
+  accountNumber: z.string().optional(),
 });
 
-export function DetailView({ id }: { id: string }) {
+export function DetailView({ memberNo }: { memberNo: string }) {
   const [user, setUser] = React.useState<z.infer<typeof formSchema> | null>(
     null
   );
 
   React.useEffect(() => {
-    if (id) {
-      getSingleMember(id).then((data) => {
+    if (memberNo) {
+      getSingleMember(memberNo).then((data) => {
         setUser(data);
       });
     }
-  }, [id]);
+  }, [memberNo]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      id: user?.id || "",
-      memberNo: user?.memberNo || "",
       memId: user?.memId || "",
       fullName: user?.fullName || "",
       telephone: user?.telephone || "",
@@ -62,10 +58,10 @@ export function DetailView({ id }: { id: string }) {
     },
   });
 
-  async function updateMember(id: string, data: unknown) {
+  async function updateMember( data: unknown) {
     try {
-      const response = await fetch(`/api/members/${id}`, {
-        method: "PATCH",
+      const response = await fetch(`/api/members/${memberNo}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
@@ -92,19 +88,16 @@ export function DetailView({ id }: { id: string }) {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log("Submitting form with values:", values); // Debugging log
 
-    if (!values.id) {
-      console.error("No member number provided");
-      return;
-    }
-
+  
     try {
-      const updatedMember = await updateMember(values.id, values);
+      const updatedMember = await updateMember(values);
       console.log("Member updated successfully:", updatedMember);
       alert("Member updated successfully!");
     } catch (error) {
       console.error("Error updating member:", error);
       alert("Failed to update member.");
     }
+    window.location.reload();
   }
 
   return (
@@ -124,18 +117,7 @@ export function DetailView({ id }: { id: string }) {
               onSubmit={form.handleSubmit(onSubmit)}
               className="space-y-4 px-5"
             >
-              <FormField
-                control={form.control}
-                name="id"
-                render={({ field }) => (
-                  <FormItem hidden>
-                    <FormLabel>ID</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+              
 
               {/* Full Name */}
               <FormField
@@ -151,22 +133,7 @@ export function DetailView({ id }: { id: string }) {
                 )}
               />
 
-              {/* Member Number (Read-Only) */}
-              <FormField
-                control={form.control}
-                name="memberNo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Member Number</FormLabel>
-                    <FormControl>
-                      <Input {...field} readOnly />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              {/* Telephone */}
-              <FormField
+                           <FormField
                 control={form.control}
                 name="telephone"
                 render={({ field }) => (
@@ -212,7 +179,7 @@ export function DetailView({ id }: { id: string }) {
           </Form>
           <DrawerFooter>
             <DrawerClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="destructive">Cancel</Button>
             </DrawerClose>
           </DrawerFooter>
         </div>

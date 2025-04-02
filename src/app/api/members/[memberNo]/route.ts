@@ -5,8 +5,8 @@ import pool  from "@/lib/db";
 // GET: Retrieve member details by ID
 export async function GET(request, { params }) {
   try {
-    const [member] = await pool.query("SELECT * FROM members WHERE id = ?", [
-      params.id,
+    const [member] = await pool.query("SELECT * FROM members WHERE memberNo = ?", [
+      params.memberNo,
     ]);
 
     if (!member.length) {
@@ -23,8 +23,8 @@ export async function GET(request, { params }) {
 // DELETE: Remove a member by ID
 export async function DELETE(request, { params }) {
   try {
-    const result = await pool.query("DELETE FROM members WHERE id = ?", [
-      params.id,
+    const result = await pool.query("DELETE FROM members WHERE memberNo = ?", [
+      params.memberNo,
     ]);
 
     if (result.affectedRows === 0) {
@@ -43,9 +43,9 @@ export async function PUT(request, { params }) {
   try {
     const data = await request.json();
 
-    const [result] = await pool.query("UPDATE members SET ? WHERE id = ?", [
+    const [result] = await pool.query("UPDATE members SET ? WHERE memberNo = ?", [
       data,
-      params.id,
+      params.memberNo,
     ]);
 
     if (result.affectedRows === 0) {

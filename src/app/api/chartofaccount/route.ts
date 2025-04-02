@@ -16,10 +16,22 @@ export async function POST(req: Request) {
             return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
         }
 
+        // Ensure the table exists
+        const createTableQuery = `
+            CREATE TABLE IF NOT EXISTS chartofaccount (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                accountName VARCHAR(255) NOT NULL,
+                accountNumber BIGINT UNIQUE NOT NULL,
+                balances DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+                createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `;
+        await pool.query(createTableQuery);
+
         // Insert into database
-        const query = 'INSERT INTO chartofaccount (accountName, accountNumber, balances) VALUES (?, ?, ?)';
+        const insertQuery = 'INSERT INTO chartofaccount (accountName, accountNumber, balances) VALUES (?, ?, ?)';
         const values = [accountName, accountNumber, parseFloat(balances) || 0];
-        await pool.query(query, values);
+        await pool.query(insertQuery, values);
 
         return new Response(JSON.stringify({ message: 'Account created successfully' }), { status: 201 });
 
@@ -28,7 +40,6 @@ export async function POST(req: Request) {
         return new Response(JSON.stringify({ error: 'Failed to create account' }), { status: 500 });
     }
 }
-
 
 export async function GET() {
     try {

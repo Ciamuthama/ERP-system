@@ -15,11 +15,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger,  DialogTitle } from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -27,6 +23,7 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
+import { getDNC } from "@/lib/actions";
 
 const formSchema = z.object({
   accountName: z.string().min(3, "Full name is required"),
@@ -37,7 +34,15 @@ const formSchema = z.object({
 export default function ChatOfAccount() {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-  const [accounts, setAccounts] = useState<{ id: string; accountNumber: string; accountName: string; balances: string }[]>([]);
+  const [accounts, setAccounts] = useState<
+    {
+      id: string;
+      accountNumber: string;
+      accountName: string;
+      balances: string;
+    }[]
+  >([]);
+  const [dncData, setDncData] = useState([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -47,8 +52,6 @@ export default function ChatOfAccount() {
       balances: "",
     },
   });
-
-
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
@@ -83,112 +86,145 @@ export default function ChatOfAccount() {
 
   async function fetchAccounts() {
     try {
-        const response = await fetch("/api/chartofaccount");
+      const response = await fetch("/api/chartofaccount");
 
-        if (!response.ok) {
-            throw new Error("Failed to fetch accounts");
-        }
+      if (!response.ok) {
+        throw new Error("Failed to fetch accounts");
+      }
 
-        return await response.json();
+      return await response.json();
     } catch (error) {
-        console.error("Error fetching accounts:", error);
-        return [];
+      console.error("Error fetching accounts:", error);
+      return [];
     }
-}
+  }
 
-
-
-
-useEffect(() => {
+  useEffect(() => {
     async function loadAccounts() {
-        const data = await fetchAccounts();
-        setAccounts(data);
+      const accountsData = await fetchAccounts(); // Fetch organization accounts
+      const transactions = await getDNC(); // Fetch debit & credit transactions
+
+      let totalCredit = 0; // Money taken out
+      let totalDebit = 0; // Money deposited
+
+      transactions.forEach(({ amount, type }) => {
+        const parsedAmount = parseFloat(amount);
+        if (type === "credit") {
+          totalCredit += parsedAmount; // Track total withdrawals
+        } else if (type === "debit") {
+          totalDebit += parsedAmount; // Track total deposits
+        }
+      });
+
+      // Update balances for organization accounts
+      const updatedAccounts = accountsData.map((account) => ({
+        ...account,
+        balances: (
+          parseFloat(account.balances) +
+          totalDebit -
+          totalCredit
+        ).toFixed(2), // Apply changes
+      }));
+
+      setAccounts(updatedAccounts);
     }
 
     loadAccounts();
-}, []);
+  }, []);
 
+  console.log(accounts);
 
   return (
-    <div className="mx-auto">
-      <h3 className="font-semibold text-center">Chart Of Account</h3>
-      <Table className="w-full">
-        <TableCaption>Chart of Account</TableCaption>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Account Number</TableHead>
-            <TableHead>Account Name</TableHead>
-            <TableHead>Balance</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {accounts.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell className="font-medium">{item.accountNumber}</TableCell>
-              <TableCell>{item.accountName}</TableCell>
-              <TableCell>{item.balances}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <Dialog>
-        <DialogTrigger className="border p-2 rounded-md bg-black text-white font-semibold">Open New Account</DialogTrigger>
-        <DialogContent>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-8 px-5 grid grid-cols-1 gap-3"
-            >
-              <FormField
-                control={form.control}
-                name="accountName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Account Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+    <>
+      {loading ? (
+         <p className="loading"></p>
+      ) : (
+        <div className="mx-auto">
+          <h3 className="font-semibold text-center">Chart Of Account</h3>
+          <Table className="w-full">
+            <TableCaption>Chart of Account</TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Account Number</TableHead>
+                <TableHead>Account Name</TableHead>
+                <TableHead>Balance</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {accounts.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="font-medium">
+                    {item.accountNumber}
+                  </TableCell>
+                  <TableCell>{item.accountName}</TableCell>
+                  <TableCell>{item.balances}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <Dialog>
+            <DialogTrigger className="border p-2 rounded-md bg-black text-white font-semibold">
+              Open New Account
+            </DialogTrigger>
+            <DialogContent>
+            <DialogTitle>Create New Account</DialogTitle>
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-8 px-5 grid grid-cols-1 gap-3"
+                >
+                  <FormField
+                    control={form.control}
+                    name="accountName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Account Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="accountNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Account Number</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="balances"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Balance</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="accountNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Account Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="balances"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Balance</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
 
-              <div className="col-span-2">
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Saving..." : "Save"}
-                </Button>
-                {successMessage && (
-                  <p className="text-green-600 mt-2">{successMessage}</p>
-                )}
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-    </div>
+                  <div className="col-span-2">
+                    <Button type="submit" disabled={loading}>
+                      {loading ? "Saving..." : "Save"}
+                    </Button>
+                    {successMessage && (
+                      <p className="text-green-600 mt-2">{successMessage}</p>
+                    )}
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
+    </>
   );
 }
