@@ -10,14 +10,21 @@ interface Company {
 export default function Company() {
   const [compData, setCompData] = useState<Company[]>([]);
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const fetchData = async () => {
       const response = await fetch("/api/saccosettings");
       const data = await response.json();
       setCompData(data);
+      setLoading(false);
     };
     fetchData();
   }, []);
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
 
   return (
     <>

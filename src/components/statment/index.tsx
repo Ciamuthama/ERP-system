@@ -16,7 +16,7 @@ interface Transaction {
   memberNo: number;
   amount: number;
   description: string;
-  createdAt: string;
+  date: string;
 }
 
 interface TransactionsTableProps {
@@ -37,11 +37,11 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ dncData }) => {
         </TableHeader>
         <TableBody>
           {(Array.isArray(dncData) ? dncData : [])
-            .filter((txn) => txn.type === "credit") // Filter only credit transactions
+            .filter((txn) => txn.type === "credit") 
             .map((txn, index, filteredData) => (
               <TableRow key={txn.id}>
                 <TableCell>
-                  {new Date(txn.createdAt).toLocaleDateString()}
+                  {new Date(txn.date).toLocaleDateString()}
                 </TableCell>
                 <TableCell>{txn.description.toLocaleUpperCase()}</TableCell>
                 <TableCell>KSh {Number(txn.amount).toLocaleString()}</TableCell>

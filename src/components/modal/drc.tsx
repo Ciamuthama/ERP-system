@@ -24,7 +24,7 @@ export function Drc({ data }) {
       <TableBody>
         {data.map((item) => (
           <TableRow key={item.id}>
-            <TableCell>{new Date(item.createdAt).toDateString()}</TableCell>
+            <TableCell>{new Date(item.date).toDateString()}</TableCell>
             <TableCell className="capitalize">{item.type}</TableCell>
             <TableCell>{item.accountNumber}</TableCell>
             <TableCell>{item.memberNo}</TableCell>

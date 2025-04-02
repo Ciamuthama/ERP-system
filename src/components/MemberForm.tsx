@@ -125,7 +125,7 @@ export default function MemberForm() {
                       <FormItem>
                         <FormLabel>ID Number</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} type="number" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -137,7 +137,7 @@ export default function MemberForm() {
                       <FormItem>
                         <FormLabel>Title</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} type="text" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -149,7 +149,7 @@ export default function MemberForm() {
                       <FormItem>
                         <FormLabel>Full Name</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} type="text" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -161,7 +161,7 @@ export default function MemberForm() {
                       <FormItem>
                         <FormLabel>Telephone Number</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} type="tel" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -173,7 +173,7 @@ export default function MemberForm() {
                       <FormItem>
                         <FormLabel>Email Address</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} type="email" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -196,6 +196,7 @@ export default function MemberForm() {
                         <FormControl>
                           <Input
                             {...field}
+                            type="number"
                             value={new Intl.NumberFormat().format(
                               Number(field.value.replace(/,/g, "")) || 0
                             )}

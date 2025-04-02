@@ -3,6 +3,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import Image from "next/image";
 import { EyeSlashIcon, EyeIcon } from "@heroicons/react/24/solid";
+import { Toaster } from "./ui/sonner";
+import { toast } from "sonner";
 
 import {
   Table,
@@ -38,6 +40,7 @@ const formSchema = z.object({
   profile: z.any().optional(),
   email: z.string().email("Invalid email address"),
   telephone: z.string().min(10, "Phone number must be at least 10 characters"),
+  password: z.string(),
 });
 interface User {
   id: string;
@@ -48,246 +51,306 @@ interface User {
 }
 
 export function Users() {
-    const [usersData, setUserData] = useState<User[]>([]);
-    const [user, setUser] = useState<z.infer<typeof formSchema> | null>(null);
-    const [userPreview, setUserPreview] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const [successMessage, setSuccessMessage] = useState("");
-    const [isDrawerOpen, setIsDrawerOpen] = useState(false); // State to control drawer visibility
+  const [usersData, setUserData] = useState<User[]>([]);
+  const [user, setUser] = useState<z.infer<typeof formSchema> | null>(null);
+  const [userPreview, setUserPreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false); // State to control drawer visibility
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const response = await fetch("/api/users");
-            const data = await response.json();
-            setUserData(data);
-        };
-        fetchData();
-    }, []);
-
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            name: user?.name || "",
-            profile: user?.profile || "",
-            email: user?.email || "",
-            telephone: user?.telephone || "",
-            fullName: user?.fullName || "",
-        },
-    });
-
-    useEffect(() => {
-        if (user) {
-            form.reset({
-                name: user.name,
-                profile: user.profile,
-                email: user.email,
-                telephone: user.telephone,
-                fullName: user.fullName,
-            });
-            setUserPreview(user.profile || null);
-        }
-    }, [user, form]);
-
-    const handleRowClick = (selectedUser: User) => {
-        setUser(selectedUser);
-        setIsDrawerOpen(true); // Open the drawer
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch("/api/users");
+        const data = await response.json();
+        setUserData(data);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      } finally {
+        setLoading(false);
+      }
     };
+    fetchData();
+  }, []);
 
-    const submitUser = async (data: z.infer<typeof formSchema>) => {
-        setLoading(true);
-        setSuccessMessage("");
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: user?.name || "",
+      profile: user?.profile || "",
+      password: user?.password || "",
+      email: user?.email || "",
+      telephone: user?.telephone || "",
+      fullName: user?.fullName || "",
+    },
+  });
 
-        try {
-            const formData = new FormData();
-            formData.append("name", data.name);
-           
-            formData.append("fullName", data.fullName);
-            formData.append("email", data.email);
-            formData.append("telephone", data.telephone);
-            if (data.profile instanceof File) {
-                formData.append("profile", data.profile);
-            }
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        name: user.name,
+        profile: user.profile,
+        password: user.password,
+        email: user.email,
+        telephone: user.telephone,
+        fullName: user.fullName,
+      });
+      setUserPreview(user.profile || null);
+    }
+  }, [user, form]);
 
-            const response = await fetch(`/api/users/${user?.id}`, {
-                method: "POST",
-                body: formData,
-            });
+  const handleRowClick = (selectedUser: User) => {
+    setUser(selectedUser);
+    setIsDrawerOpen(true);
+  };
 
-            if (!response.ok) {
-                throw new Error("Failed to save user settings.");
-            }
+  const submitUser = async (data: z.infer<typeof formSchema>) => {
+    setLoading(true);
+    setSuccessMessage("");
 
-            setSuccessMessage("User settings saved successfully!");
-            form.reset();
-            setUserPreview(null);
-            setIsDrawerOpen(false);
-        } catch (error) {
-            console.error("Error saving user settings:", error);
-            alert("Failed to save user settings.");
-        } finally {
-            setLoading(false);
-        }
-    };
+    try {
+      const formData = new FormData();
+      formData.append("name", data.name);
 
-    const handleUserImage = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            setUserPreview(URL.createObjectURL(file));
-            form.setValue("profile", file);
-        }
-    };
+      formData.append("fullName", data.fullName);
+      formData.append("email", data.email);
+      formData.append("telephone", data.telephone);
+      formData.append("password", data.password);
+      if (data.profile instanceof File) {
+        formData.append("profile", data.profile);
+      }
 
-    return (
-        <div>
-            <Table className="mx-2 w-[70%]">
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Profile</TableHead>
-                        <TableHead>UserName</TableHead>
-                        <TableHead>Full Name</TableHead>
-                        <TableHead>Email</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {usersData.map((item) => (
-                        <TableRow key={item.id} onClick={() => handleRowClick(item)} className="cursor-pointer">
-                            <TableCell>
-                                <img
-                                    title="profile"
-                                    src={item.profile}
-                                    className="w-10 h-10 rounded-full"
-                                />
-                            </TableCell>
-                            <TableCell>{item.name}</TableCell>
-                            <TableCell>{item.fullName}</TableCell>
-                            <TableCell>{item.email}</TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-            <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen} direction="right">
-                <DrawerContent className="m-5 rounded-l-xl">
-                    <div className="mx-auto w-full max-w-sm">
-                        <DrawerHeader>
-                            <DrawerTitle>Edit Member</DrawerTitle>
-                        </DrawerHeader>
-                        <Form {...form}>
-                            <form onSubmit={form.handleSubmit(submitUser)} className="px-5">
-                                <h2 className="font-semibold text-neutral-800">
-                                    User Settings
-                                </h2>
-                                <FormField
-                                    control={form.control}
-                                    name="fullName"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Full Name</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="name"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>User Name</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="telephone"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Phone Number</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="email"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Email</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
-                                />
-                                {/* <FormField
-                                    control={form.control}
-                                    name="password"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Current Password</FormLabel>
-                                            <FormControl>
-                                                <div className="relative">
-                                                    <Input
-                                                        type={showPassword ? "text" : "password"}
-                                                        {...field}
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowPassword(!showPassword)}
-                                                        className="absolute inset-y-0 right-0 px-3 text-black"
-                                                    >
-                                                        {showPassword ? (
-                                                            <EyeIcon className="size-4" />
-                                                        ) : (
-                                                            <EyeSlashIcon className="size-4" />
-                                                        )}
-                                                    </button>
-                                                </div>
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
-                                /> */}
-                                <div className="col-span-3">
-                                    <FormLabel>User Image</FormLabel>
-                                    <div className="flex gap-4 items-center mt-2">
-                                        <Input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleUserImage}
-                                        />
-                                        {userPreview && (
-                                            <Image
-                                                src={userPreview}
-                                                alt="Logo Preview"
-                                                width={80}
-                                                height={80}
-                                                className="rounded border"
-                                            />
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="col-span-2 mt-2">
-                                    <Button type="submit" disabled={loading}>
-                                        {loading ? "Saving..." : "Save User Settings"}
-                                    </Button>
-                                </div>
-                            </form>
-                        </Form>
-                        <DrawerFooter>
+      const response = await fetch(`/api/users/${user?.id}`, {
+        method: "PUT",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save user settings.");
+      }
+
+      setSuccessMessage("User settings saved successfully!");
+      toast("User settings saved successfully!");
+      form.reset();
+      setUserPreview(null);
+      setIsDrawerOpen(false);
+    } catch (error) {
+      console.error("Error saving user settings:", error);
+      alert("Failed to save user settings.");
+    } finally {
+      setLoading(false);
+    }
+    window.location.reload();
+  };
+
+  const deleteUser = async (userId: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete user.");
+      }
+
+      setUserData((prev) => prev.filter((user) => user.id !== userId));
+      toast("User deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      alert("Failed to delete user.");
+    } finally {
+      setLoading(false);
+    }
+    window.location.reload();
+  };
+
+  const handleUserImage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setUserPreview(URL.createObjectURL(file));
+      form.setValue("profile", file);
+    }
+  };
+
+  return (
+    <div>
+      {loading ? (
+        <p>Loading....</p>
+      ) : (
+        <>
+          {" "}
+          <Table className="mx-2 w-[70%]">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Profile</TableHead>
+                <TableHead>UserName</TableHead>
+                <TableHead>Full Name</TableHead>
+                <TableHead>Email</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {usersData.map((item) => (
+                <TableRow
+                  key={item.id}
+                  onClick={() => handleRowClick(item)}
+                  className="cursor-pointer"
+                >
+                  <TableCell>
+                    <img
+                      title="profile"
+                      src={item.profile}
+                      className="w-10 h-10 rounded-full object-center"
+                    />
+                  </TableCell>
+                  <TableCell>{item.name}</TableCell>
+                  <TableCell>{item.fullName}</TableCell>
+                  <TableCell>{item.email}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <Drawer
+            open={isDrawerOpen}
+            onOpenChange={setIsDrawerOpen}
+            direction="right"
+          >
+            <DrawerContent className="m-5 rounded-l-xl">
+              <div className="mx-auto w-full max-w-sm">
+                <DrawerHeader>
+                  <DrawerTitle>Edit Member</DrawerTitle>
+                </DrawerHeader>
+                <Form {...form}>
+                  <form
+                    onSubmit={form.handleSubmit(submitUser)}
+                    className="px-5"
+                  >
+                    <h2 className="font-semibold text-neutral-800">
+                      User Settings
+                    </h2>
+                    <FormField
+                      control={form.control}
+                      name="fullName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="text" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>User Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="text" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="telephone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="tel" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="email" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Current/New Password</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                type={showPassword ? "text" : "password"}
+                                {...field}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute inset-y-0 right-0 px-3 text-black"
+                              >
+                                {showPassword ? (
+                                  <EyeIcon className="size-4" />
+                                ) : (
+                                  <EyeSlashIcon className="size-4" />
+                                )}
+                              </button>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <div className="col-span-3">
+                      <FormLabel>User Image</FormLabel>
+                      <div className="flex gap-4 items-center mt-2">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleUserImage}
+                        />
+                        {userPreview && (
+                          <Image
+                            src={userPreview}
+                            alt="Logo Preview"
+                            width={80}
+                            height={80}
+                            className="rounded border"
+                          />
+                        )}
+                      </div>
+                    </div>
+                    <div className="col-span-2 mt-2">
+                      <Button type="submit" disabled={loading}>
+                        {loading ? "Saving..." : "Save User Settings"}
+                      </Button>{" "}
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={() => user && deleteUser(user.id)}
+                        disabled={loading}
+                      >
+                        {loading ? "Deleting..." : "Delete"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+                {/* <DrawerFooter>
                             <DrawerClose asChild>
                                 <Button variant="destructive">Cancel</Button>
                             </DrawerClose>
-                        </DrawerFooter>
-                    </div>
-                </DrawerContent>
-            </Drawer>
-        </div>
-    );
+                        </DrawerFooter> */}
+              </div>
+            </DrawerContent>
+          </Drawer>
+          {successMessage && <Toaster />}
+        </>
+      )}
+    </div>
+  );
 }
-

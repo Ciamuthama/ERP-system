@@ -127,7 +127,7 @@ export function DetailView({ memberNo }: { memberNo: string }) {
                   <FormItem>
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} type="text" />
                     </FormControl>
                   </FormItem>
                 )}
@@ -140,7 +140,7 @@ export function DetailView({ memberNo }: { memberNo: string }) {
                   <FormItem>
                     <FormLabel>Telephone</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} type="tel" />
                     </FormControl>
                   </FormItem>
                 )}
@@ -154,7 +154,7 @@ export function DetailView({ memberNo }: { memberNo: string }) {
                   <FormItem>
                     <FormLabel>Email Address</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} type="email" />
                     </FormControl>
                   </FormItem>
                 )}

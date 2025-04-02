@@ -36,6 +36,7 @@ const formSchema = z.object({
   memberNo: z.string().nonempty({ message: "Member number is required" }),
   fullName: z.string().nonempty({ message: "Full name is required" }),
   description: z.string().optional(),
+  date: z.string(),
   amount: z.string().regex(/^[0-9]+$/, { message: "Amount must be a number" }),
 });
 
@@ -54,6 +55,7 @@ export function DebitCreditCards() {
       accountNumber: "",
       fullName: "",
       description: "",
+      date: "",
       amount: "0",
     },
   });
@@ -127,6 +129,7 @@ export function DebitCreditCards() {
     } catch (error) {
       console.error("Error submitting form:", error);
     }
+    window.location.reload()
   }
 
   return (
@@ -188,7 +191,6 @@ export function DebitCreditCards() {
                     )}
                   />
 
-                  {/* Show Loan Checkbox ONLY when Credit is selected */}
                   {form.watch("type") === "credit" && (
                     <div>
                       <Checkbox
@@ -280,6 +282,19 @@ export function DebitCreditCards() {
                               }
                             }}
                           />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Date</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="date" required/>
                         </FormControl>
                       </FormItem>
                     )}

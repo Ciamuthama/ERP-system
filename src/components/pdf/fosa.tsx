@@ -79,7 +79,9 @@ export default function FosaStatementPDF({ data, sacco, member }) {
         <View style={styles.headerContainer}>
           {sacco[0].logo && <Image src={sacco[0].logo} style={styles.logo} />}
           <Text style={styles.title}>{sacco[0].companyName}</Text>
+          <Text>{sacco[0].email}</Text>
           <Text>{sacco[0].address}</Text>
+          <Text>{sacco[0].telephone}</Text>
         </View>
 
         {/* Statement Title */}
@@ -91,7 +93,7 @@ export default function FosaStatementPDF({ data, sacco, member }) {
             {" "}
             <Text>Member Name: {member.fullName}</Text>
             <Text>Member No: {member.memberNo}</Text>
-            <Text>Account Number: {member.accountNo}</Text>
+            <Text>Account Number: {member.accountNumber}</Text>
           </View>
           <View>
             <Text>Telephone: {member.telephone}</Text>
@@ -123,7 +125,7 @@ export default function FosaStatementPDF({ data, sacco, member }) {
             transactionsWithBalance.map((txn, index) => (
               <View key={index} style={styles.transactionRow}>
                 <Text style={styles.tableCell}>
-                  {new Date(txn.createdAt).toLocaleDateString()}
+                  {new Date(txn.date).toLocaleDateString()}
                 </Text>
                 <Text style={styles.tableCell}>{txn.description}</Text>
                 <Text style={styles.tableCell}>
@@ -147,8 +149,8 @@ export default function FosaStatementPDF({ data, sacco, member }) {
 
         {/* Shares Calculation */}
         <View style={styles.section}>
-          <Text>Total Shares: KSh {totalShares.toLocaleString()}</Text>
-          <Text>Total Loan: KSH {totalLoan.toLocaleString()}</Text>
+          <Text>Total Shares: KSh {totalShares.toLocaleString()}.00</Text>
+          <Text>Total Loan: KSH {totalLoan.toLocaleString()}.00</Text>
         </View>
 
         {/* Footer */}

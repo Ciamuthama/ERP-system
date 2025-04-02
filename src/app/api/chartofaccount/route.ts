@@ -2,35 +2,31 @@ import pool from '@/lib/db';
 
 export async function POST(req: Request) {
     try {
-        // Debugging: Log the request body
         const bodyText = await req.text();
-        console.log("Raw request body:", bodyText);
-
-        // Parse JSON
         const body = JSON.parse(bodyText);
-        console.log("Parsed request body:", body);
+        const { accountName, accountNumber, balances, code, isBankAccount } = body;
 
-        const { accountName, accountNumber, balances } = body;
-
-        if (!accountName || !accountNumber || balances === undefined) {
+        if (!accountName || !accountNumber || !code || balances === undefined) {
             return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
         }
 
-        // Ensure the table exists
-        const createTableQuery = `
-            CREATE TABLE IF NOT EXISTS chartofaccount (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                accountName VARCHAR(255) NOT NULL,
-                accountNumber BIGINT UNIQUE NOT NULL,
-                balances DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-                createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `;
-        await pool.query(createTableQuery);
+        // If isBankAccount is true, ensure no other bank account exists
+        if (isBankAccount) {
+            const [existingBank] = await pool.query(
+                'SELECT COUNT(*) AS bankCount FROM chartofaccount WHERE isBankAccount = 1'
+            );
+
+            if (existingBank[0].bankCount > 0) {
+                return new Response(JSON.stringify({ error: 'Only one bank account is allowed' }), { status: 400 });
+            }
+        }
 
         // Insert into database
-        const insertQuery = 'INSERT INTO chartofaccount (accountName, accountNumber, balances) VALUES (?, ?, ?)';
-        const values = [accountName, accountNumber, parseFloat(balances) || 0];
+        const insertQuery = `
+            INSERT INTO chartofaccount (accountName, accountNumber, balances, code, isBankAccount)
+            VALUES (?, ?, ?, ?, ?)
+        `;
+        const values = [accountName, accountNumber, parseFloat(balances) || 0, code, isBankAccount ? 1 : 0];
         await pool.query(insertQuery, values);
 
         return new Response(JSON.stringify({ message: 'Account created successfully' }), { status: 201 });

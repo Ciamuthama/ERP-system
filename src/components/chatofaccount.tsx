@@ -15,7 +15,12 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogTrigger,  DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -24,11 +29,14 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { getDNC } from "@/lib/actions";
+import { Checkbox } from "./ui/checkbox";
 
 const formSchema = z.object({
   accountName: z.string().min(3, "Full name is required"),
   balances: z.string().min(3),
   accountNumber: z.string(),
+  code: z.string(),
+  isBankAccount: z.boolean().default(false),
 });
 
 export default function ChatOfAccount() {
@@ -40,16 +48,19 @@ export default function ChatOfAccount() {
       accountNumber: string;
       accountName: string;
       balances: string;
+      code: string;
+      isBankAccount: boolean;
     }[]
   >([]);
-  const [dncData, setDncData] = useState([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      code: "",
       accountNumber: "",
       accountName: "",
       balances: "",
+      isBankAccount: false,
     },
   });
 
@@ -101,30 +112,34 @@ export default function ChatOfAccount() {
 
   useEffect(() => {
     async function loadAccounts() {
-      const accountsData = await fetchAccounts(); // Fetch organization accounts
-      const transactions = await getDNC(); // Fetch debit & credit transactions
+      const accountsData = await fetchAccounts();
+      const transactions = await getDNC();
 
-      let totalCredit = 0; // Money taken out
-      let totalDebit = 0; // Money deposited
+      let totalCredit = 0;
+      let totalDebit = 0;
 
       transactions.forEach(({ amount, type }) => {
         const parsedAmount = parseFloat(amount);
         if (type === "credit") {
-          totalCredit += parsedAmount; // Track total withdrawals
+          totalCredit += parsedAmount;
         } else if (type === "debit") {
-          totalDebit += parsedAmount; // Track total deposits
+          totalDebit += parsedAmount;
         }
       });
 
-      // Update balances for organization accounts
-      const updatedAccounts = accountsData.map((account) => ({
-        ...account,
-        balances: (
-          parseFloat(account.balances) +
-          totalDebit -
-          totalCredit
-        ).toFixed(2), // Apply changes
-      }));
+      const updatedAccounts = accountsData.map((account) => {
+        if (account.isBankAccount) {
+          return {
+            ...account,
+            balances: (
+              parseFloat(account.balances) +
+              totalDebit -
+              totalCredit
+            ).toFixed(2),
+          };
+        }
+        return account;
+      });
 
       setAccounts(updatedAccounts);
     }
@@ -132,12 +147,10 @@ export default function ChatOfAccount() {
     loadAccounts();
   }, []);
 
-  console.log(accounts);
-
   return (
     <>
       {loading ? (
-         <p className="loading"></p>
+        <p className="loading"></p>
       ) : (
         <div className="mx-auto">
           <h3 className="font-semibold text-center">Chart Of Account</h3>
@@ -167,7 +180,7 @@ export default function ChatOfAccount() {
               Open New Account
             </DialogTrigger>
             <DialogContent>
-            <DialogTitle>Create New Account</DialogTitle>
+              <DialogTitle>Create New Account</DialogTitle>
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
@@ -175,17 +188,45 @@ export default function ChatOfAccount() {
                 >
                   <FormField
                     control={form.control}
+                    name="isBankAccount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Is Bank Account?</FormLabel>
+                        <FormControl>
+                          <input
+                            type="checkbox"
+                            {...field}
+                            checked={field.value}
+                            className="peer border-input dark:bg-input/30 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground dark:data-[state=checked]:bg-primary data-[state=checked]:border-primary focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive size-4 shrink-0 rounded-[4px] border shadow-xs transition-shadow outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Code</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="number" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
                     name="accountName"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Account Name</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} type="text" />
                         </FormControl>
                       </FormItem>
                     )}
                   />
-
                   <FormField
                     control={form.control}
                     name="accountNumber"
@@ -193,7 +234,7 @@ export default function ChatOfAccount() {
                       <FormItem>
                         <FormLabel>Account Number</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} type="number" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -205,12 +246,20 @@ export default function ChatOfAccount() {
                       <FormItem>
                         <FormLabel>Balance</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field}  value={new Intl.NumberFormat().format(
+                              Number(field.value.replace(/,/g, "")) || 0
+                            )}
+                            onChange={(e) => {
+                              const rawValue = e.target.value.replace(/,/g, ""); 
+                              if (/^\d*$/.test(rawValue)) {
+                               
+                                field.onChange(rawValue);
+                              }
+                            }}/>
                         </FormControl>
                       </FormItem>
                     )}
                   />
-
                   <div className="col-span-2">
                     <Button type="submit" disabled={loading}>
                       {loading ? "Saving..." : "Save"}

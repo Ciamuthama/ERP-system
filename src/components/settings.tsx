@@ -107,6 +107,7 @@ export default function SaccoCompanyForm() {
     } finally {
       setLoading(false);
     }
+    window.location.reload()
   };
 
   const submitUser = async (data: z.infer<typeof userSchema>) => {
@@ -142,6 +143,7 @@ export default function SaccoCompanyForm() {
     } finally {
       setLoading(false);
     }
+    window.location.reload()
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -291,7 +293,7 @@ export default function SaccoCompanyForm() {
                       <FormItem>
                         <FormLabel>Full Name</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} type="text" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -303,7 +305,7 @@ export default function SaccoCompanyForm() {
                       <FormItem>
                         <FormLabel>User Name</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} type="text" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -315,7 +317,7 @@ export default function SaccoCompanyForm() {
                       <FormItem>
                         <FormLabel>Phone Number</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} type="tel" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -327,7 +329,7 @@ export default function SaccoCompanyForm() {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} type="email" />
                         </FormControl>
                       </FormItem>
                     )}
