@@ -6,12 +6,14 @@ import {
   View,
   Image,
   StyleSheet,
+  Font,
 } from "@react-pdf/renderer";
 
+// Define styles
 const styles = StyleSheet.create({
-  page: { padding: 20, fontSize: 12 },
-  headerContainer: { alignItems: "center", marginBottom: 10 },
-  logo: { width: 60, height: "auto", marginBottom: 5 },
+  page: { padding: 20, fontSize: 10, marginHorizontal: "auto", height: "100vh" },
+  headerContainer: { flexDirection: "row", width: "80%" },
+  logo: { width: "20%", height: "auto" },
   title: {
     fontSize: 16,
     fontWeight: "bold",
@@ -50,14 +52,24 @@ const styles = StyleSheet.create({
     paddingBottom: 3,
     marginBottom: 3,
   },
-  tableCell: { flex: 1, textAlign: "center" },
+  tableCell: { flex: 1, textAlign: "center",fontSize:8 },
+  footer: {
+    position: "absolute",
+    bottom: 20,
+    left: 0,
+    right: 0,
+    textAlign: "center",
+    fontSize: 10,
+    marginHorizontal: 20,
+  },
 });
 
 export default function FosaStatementPDF({ data, sacco, member }) {
   if (!data || !member || !sacco) return null;
 
-  // Filter credit transactions
+  // Filter credit and debit transactions
   const creditTransactions = data.filter((txn) => txn.type === "credit");
+  const debitTransactions = data.filter((txn) => txn.type === "debit");
 
   // Calculate total shares (sum of credit transactions / 4)
   const totalShares =
@@ -65,12 +77,24 @@ export default function FosaStatementPDF({ data, sacco, member }) {
 
   // Calculate balance dynamically
   let runningBalance = Number(member.openingBalance) || 0;
-  const transactionsWithBalance = creditTransactions.map((txn) => {
-    runningBalance += Number(txn.amount);
+  const transactionsWithBalance = [...creditTransactions, ...debitTransactions].map((txn) => {
+    if (txn.type === "credit") {
+      runningBalance += Number(txn.amount);
+    } else if (txn.type === "debit") {
+      runningBalance -= Number(txn.amount);
+    }
     return { ...txn, balance: runningBalance };
   });
 
-  const totalLoan = creditTransactions.reduce((acc, txn) => acc + Number(txn.amount), 0)
+  const totalLoan = creditTransactions.reduce(
+    (acc, txn) => acc + Number(txn.amount),
+    0
+  );
+
+  // Get Printed Date
+  const printedDate = new Date().toLocaleString("en-KE", {
+    dateStyle: "short",
+  });
 
   return (
     <Document>
@@ -78,19 +102,28 @@ export default function FosaStatementPDF({ data, sacco, member }) {
         {/* SACCO Logo & Details */}
         <View style={styles.headerContainer}>
           {sacco[0].logo && <Image src={sacco[0].logo} style={styles.logo} />}
-          <Text style={styles.title}>{sacco[0].companyName}</Text>
-          <Text>{sacco[0].email}</Text>
-          <Text>{sacco[0].address}</Text>
-          <Text>{sacco[0].telephone}</Text>
+          <View
+            style={{
+              alignItems: "center",
+              textAlign: "center",
+              marginHorizontal: "auto",
+            }}
+          >
+            <Text style={styles.title}>{sacco[0].companyName}</Text>
+            <Text>{sacco[0].email}</Text>
+            <Text>
+              {sacco[0].address}
+            </Text>
+            <Text >{sacco[0].telephone}</Text>
+          </View>
         </View>
 
         {/* Statement Title */}
-        <Text style={styles.title}>Statement</Text>
+        <Text style={styles.title}>Account Statement</Text>
 
         {/* Member Info */}
         <View style={styles.section1}>
           <View>
-            {" "}
             <Text>Member Name: {member.fullName}</Text>
             <Text>Member No: {member.memberNo}</Text>
             <Text>Account Number: {member.accountNumber}</Text>
@@ -117,6 +150,7 @@ export default function FosaStatementPDF({ data, sacco, member }) {
             <Text style={styles.tableCellHeader}>Date</Text>
             <Text style={styles.tableCellHeader}>Description</Text>
             <Text style={styles.tableCellHeader}>Credit</Text>
+            <Text style={styles.tableCellHeader}>Debit</Text>
             <Text style={styles.tableCellHeader}>Balance</Text>
           </View>
 
@@ -127,12 +161,22 @@ export default function FosaStatementPDF({ data, sacco, member }) {
                 <Text style={styles.tableCell}>
                   {new Date(txn.date).toLocaleDateString()}
                 </Text>
-                <Text style={styles.tableCell}>{txn.description}</Text>
+                <Text style={styles.tableCell}>{txn.description} {txn.transactionType}</Text>
                 <Text style={styles.tableCell}>
-                  {new Intl.NumberFormat("en-KE", {
-                    style: "currency",
-                    currency: "KSh",
-                  }).format(txn.amount)}
+                  {txn.type === "credit"
+                    ? new Intl.NumberFormat("en-KE", {
+                        style: "currency",
+                        currency: "KSh",
+                      }).format(txn.amount)
+                    : "0.00"}
+                </Text>
+                <Text style={styles.tableCell}>
+                  {txn.type === "debit"
+                    ? new Intl.NumberFormat("en-KE", {
+                        style: "currency",
+                        currency: "KSh",
+                      }).format(txn.amount)
+                    : "0.00"}
                 </Text>
                 <Text style={styles.tableCell}>
                   {new Intl.NumberFormat("en-KE", {
@@ -143,7 +187,7 @@ export default function FosaStatementPDF({ data, sacco, member }) {
               </View>
             ))
           ) : (
-            <Text>No credit transactions available</Text>
+            <Text>No transactions available</Text>
           )}
         </View>
 
@@ -152,11 +196,25 @@ export default function FosaStatementPDF({ data, sacco, member }) {
           <Text>Total Shares: KSh {totalShares.toLocaleString()}.00</Text>
           <Text>Total Loan: KSH {totalLoan.toLocaleString()}.00</Text>
         </View>
+        <View>
+          <Text style={{ textAlign: "center" }}>Print Date: {printedDate}</Text>
+        </View>
 
-        {/* Footer */}
-        <Text style={{ textAlign: "center", marginTop: 20 }}>
-          Thank you for using our SACCO services.
-        </Text>
+        <View style={styles.footer}>
+          <Text>
+            Failing receipt by the FOSA within 15 days from the day of dispatch
+            of this statement with notice of the disagreement with any of the
+            entries, will be assumed to be correct. Any communication should be
+            addressed to the Chief Executive Officer and marked PRIVATE AND
+            CONFIDENTIAL.
+          </Text>
+          <Text>Thank you for using our SACCO services.</Text>
+          <Text style={{ textAlign: "right" }}
+            render={({ pageNumber, totalPages }) =>
+              `Page ${pageNumber} of ${totalPages}`
+            }
+          />
+        </View>
       </Page>
     </Document>
   );

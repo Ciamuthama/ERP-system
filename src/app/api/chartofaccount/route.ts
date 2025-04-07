@@ -4,9 +4,9 @@ export async function POST(req: Request) {
     try {
         const bodyText = await req.text();
         const body = JSON.parse(bodyText);
-        const { accountName, accountNumber, balances, code, isBankAccount } = body;
+        const { accountName, accountNumber, balances, isBankAccount } = body;
 
-        if (!accountName || !accountNumber || !code || balances === undefined) {
+        if (!accountName || !accountNumber || balances === undefined) {
             return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
         }
 
@@ -17,16 +17,16 @@ export async function POST(req: Request) {
             );
 
             if (existingBank[0].bankCount > 0) {
-                return new Response(JSON.stringify({ error: 'Only one bank account is allowed' }), { status: 400 });
+                return new Response(JSON.stringify({ error: 'Only one bank account is allowed', alert: true }), { status: 400 });
             }
         }
 
         // Insert into database
         const insertQuery = `
-            INSERT INTO chartofaccount (accountName, accountNumber, balances, code, isBankAccount)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO chartofaccount (accountName, accountNumber, balances, isBankAccount)
+            VALUES (?, ?, ?, ?)
         `;
-        const values = [accountName, accountNumber, parseFloat(balances) || 0, code, isBankAccount ? 1 : 0];
+        const values = [accountName, accountNumber, parseFloat(balances) || 0, isBankAccount ? 1 : 0];
         await pool.query(insertQuery, values);
 
         return new Response(JSON.stringify({ message: 'Account created successfully' }), { status: 201 });

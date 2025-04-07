@@ -181,7 +181,6 @@ export function Users() {
         <p>Loading....</p>
       ) : (
         <>
-          {" "}
           <Table className="mx-2 w-[70%]">
             <TableHeader>
               <TableRow>

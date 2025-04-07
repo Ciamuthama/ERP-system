@@ -14,6 +14,7 @@ export async function POST(req: Request) {
                 memberNo VARCHAR(50) NOT NULL,
                 amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
                 description TEXT DEFAULT NULL,
+                transactionType VARCHAR(255) DEFAULT NULL,
                 date  DATE NOT NULL,
                 createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -22,10 +23,10 @@ export async function POST(req: Request) {
 
         // Parse request body
         const body = await req.json();
-        const { accountNumber, fullName, memberNo, type, amount, description,date } = body;
+        const { accountNumber, fullName, memberNo, type, amount, description,transactionType,date } = body;
 
         // Validate required fields
-        if (!accountNumber || !fullName || !memberNo || !type || !date || amount === undefined) {
+        if (!accountNumber || !fullName || !memberNo || !type || !date || amount === undefined || !transactionType ) {
             return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400 });
         }
 
@@ -34,10 +35,10 @@ export async function POST(req: Request) {
 
         // Insert into database
         const insertQuery = `
-            INSERT INTO dnc (type, accountNumber, fullName, memberNo, amount,date, description) 
-            VALUES (?, ?, ?, ?, ?, ?,?)
+            INSERT INTO dnc (type, accountNumber, fullName, memberNo, amount,date, description,transactionType) 
+            VALUES (?, ?, ?, ?, ?, ?,?,?)
         `;
-        const values = [type, accountNumber, fullName, memberNo, validAmount,date, description || null];
+        const values = [type, accountNumber, fullName, memberNo, validAmount,date, description || null,transactionType || null];
 
         const [result] = await pool.query(insertQuery, values);
 

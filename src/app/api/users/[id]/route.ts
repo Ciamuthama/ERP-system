@@ -1,4 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable prefer-const */
+//ts-ignore
 
+"use server";
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
 import path from "path";
@@ -9,7 +13,7 @@ import bcrypt from "bcrypt";
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
     try {
         const userId = params.id;
-        const [rows]: any = await pool.query("SELECT id, name, fullName, email, telephone, profile, created_at FROM users WHERE id = ?", [userId]);
+        const [rows]: any = await pool.query("SELECT id, name, fullName, email, telephone, profile, created_at,session_token FROM users WHERE id = ?", [userId]);
 
         if (rows.length === 0) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });

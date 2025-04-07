@@ -27,8 +27,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Drc } from "./modal/drc";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Checkbox } from "./ui/checkbox";
+import { creditTypes, debitTypes } from "@/app/data/tranasctions";
 
 const formSchema = z.object({
   type: z.string().nonempty({ message: "Card type is required" }),
@@ -36,6 +37,7 @@ const formSchema = z.object({
   memberNo: z.string().nonempty({ message: "Member number is required" }),
   fullName: z.string().nonempty({ message: "Full name is required" }),
   description: z.string().optional(),
+  transactionType: z.string().optional(),
   date: z.string(),
   amount: z.string().regex(/^[0-9]+$/, { message: "Amount must be a number" }),
 });
@@ -46,6 +48,8 @@ export function DebitCreditCards() {
   const [loading, setLoading] = useState(false);
   const [loanChecked, setLoanChecked] = useState(false);
   const [loanNumber, setLoanNumber] = useState<string | null>(null);
+  const [currentBalance, setCurrentBalance] = useState(0);
+  const [debitLimit, setDebitLimit] = useState(0);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -57,28 +61,36 @@ export function DebitCreditCards() {
       description: "",
       date: "",
       amount: "0",
+      transactionType: "",
     },
   });
 
-  // Generate a random 6-digit loan number
   const generateLoanNumber = () => {
     const value = Math.floor(100000 + Math.random() * 900000).toString();
     setLoanNumber(value);
 
-    // Update the description field
-    form.setValue("description", `Loan #${value}`);
+    form.setValue("description", `Education Loan #${value}`);
   };
 
-  // Handle checkbox toggle
   const handleLoanCheckboxChange = (checked: boolean) => {
     setLoanChecked(checked);
     if (checked) {
       generateLoanNumber();
     } else {
       setLoanNumber(null);
-      form.setValue("description", ""); // Reset description if unchecked
+      form.setValue("description", "");
     }
   };
+
+  useEffect(() => {
+    if (form.watch("type") === "debit") {
+      const enteredAmount = Number(form.watch("amount")) || 0;
+      setDebitLimit(currentBalance);
+      if (enteredAmount > currentBalance) {
+        alert(`Insufficient balance! Maximum debit allowed: ${currentBalance}`);
+      }
+    }
+  }, [form.watch("amount"), form.watch("type"), currentBalance]);
 
   async function searchMember() {
     if (!searchQuery) return;
@@ -88,7 +100,6 @@ export function DebitCreditCards() {
         fetch(`/api/dnc?memberNo=${searchQuery}`),
         fetch(`/api/members/${searchQuery}`),
       ]);
-
       const fosaData = await res.json();
       const memberData = await memberRes.json();
 
@@ -96,13 +107,13 @@ export function DebitCreditCards() {
         form.setValue("memberNo", searchQuery);
         form.setValue("fullName", memberData.fullName || "");
         form.setValue("accountNumber", memberData.accountNumber || "");
+        setCurrentBalance(memberData.openingBalance || 0);
       } else {
         alert("Member not found.");
         return;
       }
 
       if (res.ok && fosaData.length > 0) {
-        form.setValue("accountNumber", fosaData[0].accountNumber || "");
         setDnc(fosaData);
       }
     } catch (error) {
@@ -113,12 +124,19 @@ export function DebitCreditCards() {
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    const enteredAmount = Number(values.amount);
+    if (values.type === "debit" && enteredAmount > currentBalance) {
+      alert(`Insufficient balance! Maximum debit allowed: ${currentBalance}`);
+      return;
+    }
+
     try {
       const response = await fetch("/api/dnc", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
+
       if (response.ok) {
         form.reset();
         setLoanChecked(false);
@@ -129,7 +147,6 @@ export function DebitCreditCards() {
     } catch (error) {
       console.error("Error submitting form:", error);
     }
-    window.location.reload()
   }
 
   return (
@@ -157,7 +174,7 @@ export function DebitCreditCards() {
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-8 px-5 pt-4"
+                  className="space-y-3 px-5 pt-4 pb-4"
                 >
                   {/* Select Type */}
                   <FormField
@@ -207,7 +224,6 @@ export function DebitCreditCards() {
                     </div>
                   )}
 
-                  {/* Member Number */}
                   <FormField
                     control={form.control}
                     name="memberNo"
@@ -215,13 +231,12 @@ export function DebitCreditCards() {
                       <FormItem>
                         <FormLabel>Member Number</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} readOnly />
                         </FormControl>
                       </FormItem>
                     )}
                   />
 
-                  {/* Full Name */}
                   <FormField
                     control={form.control}
                     name="fullName"
@@ -229,13 +244,12 @@ export function DebitCreditCards() {
                       <FormItem>
                         <FormLabel>Full Name</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} readOnly />
                         </FormControl>
                       </FormItem>
                     )}
                   />
 
-                  {/* Account Number */}
                   <FormField
                     control={form.control}
                     name="accountNumber"
@@ -243,7 +257,7 @@ export function DebitCreditCards() {
                       <FormItem>
                         <FormLabel>Account Number</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} readOnly />
                         </FormControl>
                       </FormItem>
                     )}
@@ -262,6 +276,42 @@ export function DebitCreditCards() {
                     )}
                   />
 
+                  {form.watch("type") && <FormField
+                    control={form.control}
+                    name="transactionType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Transaction Type</FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                          }}
+                          defaultValue={field.value}
+                        >
+                          <SelectTrigger className="w-[250px] mb-3">
+                            <SelectValue placeholder="Transaction type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                            
+                                {form.watch("type") === "debit"
+                                  ? debitTypes.map((type: { type: string; value: string }) => (
+                                      <SelectItem key={type.value} value={type.value}>
+                                        {type.type}
+                                      </SelectItem>
+                                    ))
+                                  : creditTypes.map((type: { type: string; value: string }) => (
+                                      <SelectItem key={type.value} value={type.value}>
+                                        {type.type}
+                                      </SelectItem>
+                                    ))}
+                                    
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />}
                   <FormField
                     control={form.control}
                     name="amount"
@@ -275,9 +325,8 @@ export function DebitCreditCards() {
                               Number(field.value.replace(/,/g, "")) || 0
                             )}
                             onChange={(e) => {
-                              const rawValue = e.target.value.replace(/,/g, ""); // Remove commas
+                              const rawValue = e.target.value.replace(/,/g, "");
                               if (/^\d*$/.test(rawValue)) {
-                                // Ensure only numbers
                                 field.onChange(rawValue);
                               }
                             }}
@@ -294,7 +343,7 @@ export function DebitCreditCards() {
                       <FormItem>
                         <FormLabel>Date</FormLabel>
                         <FormControl>
-                          <Input {...field} type="date" required/>
+                          <Input {...field} type="date" required />
                         </FormControl>
                       </FormItem>
                     )}

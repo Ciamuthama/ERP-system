@@ -35,9 +35,9 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     return () => window.removeEventListener("storage", checkAuth);
   }, []);
   
-  useEffect(() => {
+   useEffect(() => {
     document.querySelector("body > nextjs-portal")?.remove();
-}, []);
+ }, []);
 
   if (isAuthenticated === null) return  <p className="loading !h-screen"></p>;
 

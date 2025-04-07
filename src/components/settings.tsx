@@ -257,9 +257,6 @@ export default function SaccoCompanyForm() {
                 </form>
               </Form>
             </div>
-            <DialogFooter>
-              <Button type="submit">Save changes</Button>
-            </DialogFooter>
           </DialogContent>
         </Dialog>
         <Company />
@@ -389,9 +386,6 @@ export default function SaccoCompanyForm() {
                 </form>
               </Form>
             </div>
-            <DialogFooter>
-              <Button type="submit">Save changes</Button>
-            </DialogFooter>
           </DialogContent>
         </Dialog>
         <Users />

@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable prefer-const */
+//ts-ignore
 "use server";
 import { NextResponse } from "next/server";
 import pool  from "@/lib/db";

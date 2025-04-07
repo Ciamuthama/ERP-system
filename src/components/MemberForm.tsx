@@ -194,16 +194,14 @@ export default function MemberForm() {
                       <FormItem>
                         <FormLabel>Opening Balance</FormLabel>
                         <FormControl>
-                          <Input
+                        <Input
                             {...field}
-                            type="number"
                             value={new Intl.NumberFormat().format(
                               Number(field.value.replace(/,/g, "")) || 0
                             )}
                             onChange={(e) => {
-                              const rawValue = e.target.value.replace(/,/g, ""); // Remove commas
+                              const rawValue = e.target.value.replace(/,/g, ""); 
                               if (/^\d*$/.test(rawValue)) {
-                                // Ensure only numbers
                                 field.onChange(rawValue);
                               }
                             }}

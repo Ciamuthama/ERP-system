@@ -35,7 +35,7 @@ export function Drc({ data }) {
                 currency: "KES",
               }).format(item.amount)}
             </TableCell>
-            <TableCell>{item.description}</TableCell>
+            <TableCell className="text-wrap">{item.description}</TableCell>
           </TableRow>
         ))}
       </TableBody>
