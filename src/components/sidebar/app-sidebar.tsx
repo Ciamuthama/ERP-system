@@ -86,7 +86,7 @@ export function AppSidebar() {
 
      
         try {
-          const response = await fetch("/api/users/logout/"+user.id, {
+          const response = await fetch("/api/users/logout/" + user.id, {
             method: "PUT",
             body: JSON.stringify({ sessionToken }),
             headers: { "Content-Type": "application/json" },

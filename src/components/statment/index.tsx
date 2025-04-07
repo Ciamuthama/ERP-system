@@ -37,8 +37,9 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ dncData }) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {(Array.isArray(dncData) ? dncData : [])
-            .filter((txn) => txn.type === "credit") 
+        {(Array.isArray(dncData) ? dncData : [])
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // Sort by date
+            .filter((txn) => txn.type === "credit")
             .map((txn, index, filteredData) => (
               <TableRow key={txn.id}>
                 <TableCell>

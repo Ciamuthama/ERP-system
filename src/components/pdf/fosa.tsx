@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     fontWeight: "bold",
   },
-  tableCellHeader: { flex: 1, textAlign: "center", fontWeight: "bold" },
+  tableCellHeader: { flex: 1, textAlign: "left", fontWeight: "bold" },
   transactionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     paddingBottom: 3,
     marginBottom: 3,
   },
-  tableCell: { flex: 1, textAlign: "center",fontSize:8 },
+  tableCell: { flex: 1, textAlign: "left",fontSize:8,paddingHorizontal:2 },
   footer: {
     position: "absolute",
     bottom: 20,
@@ -75,16 +75,20 @@ export default function FosaStatementPDF({ data, sacco, member }) {
   const totalShares =
     creditTransactions.reduce((acc, txn) => acc + Number(txn.amount), 0) / 4;
 
-  // Calculate balance dynamically
-  let runningBalance = Number(member.openingBalance) || 0;
-  const transactionsWithBalance = [...creditTransactions, ...debitTransactions].map((txn) => {
-    if (txn.type === "credit") {
-      runningBalance += Number(txn.amount);
-    } else if (txn.type === "debit") {
-      runningBalance -= Number(txn.amount);
-    }
-    return { ...txn, balance: runningBalance };
-  });
+    const sortedTransactions = [...creditTransactions, ...debitTransactions].sort(
+      (a, b) => new Date(a.date) - new Date(b.date)
+    );
+    
+    let runningBalance = Number(member.openingBalance) || 0;
+    const transactionsWithBalance = sortedTransactions.map((txn) => {
+      if (txn.type === "credit") {
+        runningBalance += Number(txn.amount);
+      } else if (txn.type === "debit") {
+        runningBalance -= Number(txn.amount);
+      }
+      return { ...txn, balance: runningBalance };
+    });
+    
 
   const totalLoan = creditTransactions.reduce(
     (acc, txn) => acc + Number(txn.amount),

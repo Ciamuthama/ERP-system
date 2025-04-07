@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-const */
-import pool from "@/lib/db";
+import pool from "../../../lib/db";
 
 // export async function POST(req: Request) {
 //     try {

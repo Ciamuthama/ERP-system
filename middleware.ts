@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import pool from "@/lib/db";
+import pool from "./src/lib/db";
 
 export async function middleware(req: Request) {
   const sessionToken = req.headers.get("Authorization")?.replace("Bearer ", "");

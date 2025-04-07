@@ -4,7 +4,7 @@
 
 "use server";
 import { NextResponse } from "next/server";
-import pool from "@/lib/db";
+import pool from "../../../lib/db";
 import path from "path";
 import fs from "fs";
 import bcrypt from "bcrypt";

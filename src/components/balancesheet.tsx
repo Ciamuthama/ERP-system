@@ -27,9 +27,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Drc } from "./modal/drc";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { Checkbox } from "./ui/checkbox";
-import { creditTypes, debitTypes } from "@/app/data/tranasctions";
+import { creditTypes, debitTypes } from "@/app/data/transactions";
 
 const formSchema = z.object({
   type: z.string().nonempty({ message: "Card type is required" }),
@@ -82,15 +82,7 @@ export function DebitCreditCards() {
     }
   };
 
-  useEffect(() => {
-    if (form.watch("type") === "debit") {
-      const enteredAmount = Number(form.watch("amount")) || 0;
-      setDebitLimit(currentBalance);
-      if (enteredAmount > currentBalance) {
-        alert(`Insufficient balance! Maximum debit allowed: ${currentBalance}`);
-      }
-    }
-  }, [form.watch("amount"), form.watch("type"), currentBalance]);
+ 
 
   async function searchMember() {
     if (!searchQuery) return;
@@ -102,17 +94,29 @@ export function DebitCreditCards() {
       ]);
       const fosaData = await res.json();
       const memberData = await memberRes.json();
-
+      
+      const creditTransactions = fosaData.filter((txn) => txn.type === "credit");
+      const debitTransactions = fosaData.filter((txn) => txn.type === "debit");
+      
+      let runningBalance = Number(memberData.openingBalance) || 0;
+        [...creditTransactions, ...debitTransactions].forEach((txn) => {
+          if (txn.type === "credit") {
+            runningBalance += Number(txn.amount);
+          } else if (txn.type === "debit") {
+            runningBalance -= Number(txn.amount);
+          }
+        });
+        setCurrentBalance(runningBalance);
       if (memberRes.ok && memberData) {
         form.setValue("memberNo", searchQuery);
         form.setValue("fullName", memberData.fullName || "");
         form.setValue("accountNumber", memberData.accountNumber || "");
-        setCurrentBalance(memberData.openingBalance || 0);
+        
       } else {
         alert("Member not found.");
         return;
       }
-
+     
       if (res.ok && fosaData.length > 0) {
         setDnc(fosaData);
       }
@@ -122,6 +126,18 @@ export function DebitCreditCards() {
       setLoading(false);
     }
   }
+
+
+
+  useEffect(() => {
+    if (form.watch("type") === "debit") {
+      const enteredAmount = Number(form.watch("amount")) || 0;
+      setDebitLimit(currentBalance);
+      if (enteredAmount > currentBalance) {
+        alert(`Insufficient balance! Maximum debit allowed: ${currentBalance}`);
+      }
+    }
+  }, [form.watch("amount"), form.watch("type"), currentBalance]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const enteredAmount = Number(values.amount);

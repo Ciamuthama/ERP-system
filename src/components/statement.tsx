@@ -69,7 +69,7 @@ export default function FosaStatementForm() {
           {/* Search Input */}
           <div className="flex gap-2 mb-5 w-[30rem]">
             <Input
-              type="text"
+              type="search"
               placeholder="Search Member Number"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

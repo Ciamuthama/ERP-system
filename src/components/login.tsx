@@ -56,13 +56,7 @@ export default function LoginPage() {
       }
 
       const userData = await res.json();
-    
-    
-
-     
-
       const expiry = Date.now() + 60 * 60 * 1000;
-
       const userToStore = { name: userData.user.name, id: userData.user.id, expiry };
       localStorage.setItem("user", JSON.stringify(userToStore));
       window.dispatchEvent(new Event("storage"));

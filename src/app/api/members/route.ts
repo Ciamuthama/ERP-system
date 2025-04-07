@@ -6,7 +6,7 @@
 "use server";
 
 import { NextResponse } from "next/server";
-import pool from "@/lib/db";
+import pool from "../../../lib/db";
 
 export async function GET() {
   try {
@@ -20,7 +20,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    // ✅ Ensure the "members" table exists
+    // Ensure the "members" table exists
     const createTableQuery = `
       CREATE TABLE IF NOT EXISTS members (
         id INT AUTO_INCREMENT PRIMARY KEY,

@@ -8,6 +8,9 @@ import {
 } from "@/components/ui/table";
 
 export function Drc({ data }) {
+  
+  const sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
+
   return (
     <Table className="w-[90%] mx-2">
       <TableHeader>
@@ -22,7 +25,7 @@ export function Drc({ data }) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.map((item) => (
+        {sortedData.map((item) => (
           <TableRow key={item.id}>
             <TableCell>{new Date(item.date).toDateString()}</TableCell>
             <TableCell className="capitalize">{item.type}</TableCell>

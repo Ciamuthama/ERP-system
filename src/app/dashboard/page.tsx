@@ -18,20 +18,51 @@ export default function Dashboard({}) {
   const [user, setUser] = useState<any>(null);
   const [fetchedUser, setFetchedUser] = useState([]);
 
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      if (Date.now() > parsedUser.expiry) {
+    if (!storedUser) return;
+  
+    const parsedUser = JSON.parse(storedUser);
+    const timeLeft = parsedUser.expiry - Date.now();
+  
+    if (timeLeft <= 0) {
+      handleLogout(parsedUser.id);
+    } else {
+      const timer = setTimeout(() => {
+        handleLogout(parsedUser.id);
+      }, timeLeft);
+  
+      return () => clearTimeout(timer);
+    }
+  
+    async function handleLogout(id: string) {
+      try {
+        const res = await fetch(`/api/users/${id}`);
+        const data = await res.json();
+  
+        await fetch(`/api/users/logout/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_token: data.session_token }),
+        });
+  
         localStorage.removeItem("user");
         router.push("/login");
-      } else {
-        setUser(parsedUser);
+      } catch (err) {
+        console.error("Logout error:", err);
+        localStorage.removeItem("user");
+        router.push("/login");
       }
-    } else {
-      router.push("/login");
     }
   }, [router]);
+  
+  
+  
+
+
+
+  
 
   useEffect(() => {
     const fetchData = async () => {

@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import pool from "@/lib/db";
+import pool from "../../../../../lib/db";
 
 // Dynamic route: /api/users/logout/[id]
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {

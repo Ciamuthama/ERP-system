@@ -4,7 +4,7 @@
 
 "use server";
 import { NextResponse } from "next/server";
-import pool  from "@/lib/db";
+import pool  from "../../../../lib/db";
 
 // GET: Retrieve member details by ID
 export async function GET(request, { params }) {
