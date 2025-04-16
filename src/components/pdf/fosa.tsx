@@ -71,9 +71,8 @@ export default function FosaStatementPDF({ data, sacco, member }) {
   const creditTransactions = data.filter((txn) => txn.type === "credit");
   const debitTransactions = data.filter((txn) => txn.type === "debit");
 
-  // Calculate total shares (sum of credit transactions / 4)
-  const totalShares =
-    creditTransactions.reduce((acc, txn) => acc + Number(txn.amount), 0) / 4;
+ 
+  const totalShares = creditTransactions.reduce((acc, txn) => acc + Number(txn.amount), 0);
 
     const sortedTransactions = [...creditTransactions, ...debitTransactions].sort(
       (a, b) => new Date(a.date) - new Date(b.date)
@@ -90,10 +89,9 @@ export default function FosaStatementPDF({ data, sacco, member }) {
     });
     
 
-  const totalLoan = creditTransactions.reduce(
-    (acc, txn) => acc + Number(txn.amount),
-    0
-  );
+  const totalLoan = creditTransactions
+    .filter((txn) => txn.description.includes("Education Loan"))
+    .reduce((acc, txn) => acc + Number(txn.amount), 0);
 
   // Get Printed Date
   const printedDate = new Date().toLocaleString("en-KE", {
@@ -163,7 +161,7 @@ export default function FosaStatementPDF({ data, sacco, member }) {
             transactionsWithBalance.map((txn, index) => (
               <View key={index} style={styles.transactionRow}>
                 <Text style={styles.tableCell}>
-                  {new Date(txn.date).toLocaleDateString()}
+                  {new Date(txn.date).toLocaleDateString("en-KE")}
                 </Text>
                 <Text style={styles.tableCell}>{txn.description} {txn.transactionType}</Text>
                 <Text style={styles.tableCell}>
@@ -197,7 +195,7 @@ export default function FosaStatementPDF({ data, sacco, member }) {
 
         {/* Shares Calculation */}
         <View style={styles.section}>
-          <Text>Total Shares: KSh {totalShares.toLocaleString()}.00</Text>
+          <Text>Total Credits: KSh {totalShares.toLocaleString()}.00</Text>
           <Text>Total Loan: KSH {totalLoan.toLocaleString()}.00</Text>
         </View>
         <View>

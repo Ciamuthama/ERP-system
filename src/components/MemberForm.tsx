@@ -42,7 +42,7 @@ export default function MemberForm() {
       telephone: "",
       emailAddress: "",
       accountNumber: "",
-      openingBalance: "",
+      openingBalance: "0",
     },
   });
 

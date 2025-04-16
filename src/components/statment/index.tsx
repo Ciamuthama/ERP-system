@@ -43,7 +43,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ dncData }) => {
             .map((txn, index, filteredData) => (
               <TableRow key={txn.id}>
                 <TableCell>
-                  {new Date(txn.date).toLocaleDateString()}
+                    {new Date(txn.date).toLocaleDateString("en-KE")}
                 </TableCell>
                 <TableCell>{txn.description.toLocaleUpperCase()} {txn.transactionType}</TableCell>
                 <TableCell>KSh {Number(txn.amount).toLocaleString()}</TableCell>

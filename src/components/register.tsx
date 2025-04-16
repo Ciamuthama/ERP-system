@@ -3,7 +3,6 @@
 import * as React from "react";
 import {
   ColumnDef,
-  ColumnFiltersState,
   SortingState,
   VisibilityState,
   flexRender,
@@ -120,32 +119,30 @@ export const columns: ColumnDef<Member>[] = [
 
 export function Register() {
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
+  const [globalFilter, setGlobalFilter] = React.useState("");
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-  const [data,setData] = React.useState([])
+  const [data, setData] = React.useState([]);
 
-   React.useEffect(() => {
-      getMember().then((data) => setData(data));
-    }, []);
-  
+  React.useEffect(() => {
+    getMember().then((data) => setData(data));
+  }, []);
+
   const table = useReactTable({
     data,
     columns,
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     state: {
       sorting,
-      columnFilters,
+      globalFilter,
       columnVisibility,
       rowSelection,
     },
@@ -155,11 +152,9 @@ export function Register() {
     <div className="w-full">
       <div className="flex items-center py-4">
         <Input
-          placeholder="Search with member number..."
-          value={(table.getColumn("memberNo")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("memberNo")?.setFilterValue(event.target.value)
-          }
+          placeholder="Search..."
+          value={globalFilter ?? ""}
+          onChange={(event) => setGlobalFilter(event.target.value)}
           className="max-w-sm"
         />
         <DropdownMenu>

@@ -130,4 +130,5 @@ export function AppSidebar() {
           <Button onClick={logout}>Logout</Button>
         </SidebarFooter>
       </Sidebar>
-    );
+    )
+  }

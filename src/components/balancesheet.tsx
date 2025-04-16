@@ -177,6 +177,11 @@ export function DebitCreditCards() {
               placeholder="Search Member Number"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  searchMember();
+                }
+              }}
             />
             <Button onClick={searchMember} disabled={loading}>
               {loading ? "Searching..." : "Search"}

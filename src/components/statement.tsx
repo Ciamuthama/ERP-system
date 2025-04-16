@@ -72,6 +72,11 @@ export default function FosaStatementForm() {
               type="search"
               placeholder="Search Member Number"
               value={searchQuery}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  searchMember();
+                }
+              }}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             <Button onClick={searchMember} disabled={loading}>

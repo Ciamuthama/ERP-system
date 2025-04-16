@@ -88,7 +88,6 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     try {
         const userId = params.id;
 
-        // Check if the user exists and fetch the profile path
         const [rows]: any = await pool.query("SELECT profile FROM users WHERE id = ?", [userId]);
         if (rows.length === 0) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -96,14 +95,12 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
         const profilePath = rows[0].profile;
 
-        // Delete the user from the database
         const [result]: any = await pool.query("DELETE FROM users WHERE id = ?", [userId]);
 
         if (result.affectedRows === 0) {
             return NextResponse.json({ error: "User not found or could not be deleted" }, { status: 404 });
         }
 
-        // Delete the profile file if it exists
         if (profilePath) {
             const filePath = path.join(process.cwd(), "public", profilePath);
             try {

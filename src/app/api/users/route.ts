@@ -55,7 +55,7 @@ export async function POST(req: Request) {
 
 export async function GET() {
   try {
-    const [rows] = await pool.query("SELECT id, name, fullName, email, telephone, profile, created_at FROM users");
+    const [rows] = await pool.query("SELECT id, name, fullName, email, telephone, profile, created_at,session_token FROM users");
     return NextResponse.json(rows, { status: 200 });
   } catch (error) {
     console.error("Error fetching users:", error);
