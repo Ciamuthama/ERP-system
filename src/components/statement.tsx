@@ -103,12 +103,6 @@ export default function FosaStatementForm() {
               </div>
             </form>
           </div>
-          {/* statment table */}
-          <div className="mt-5 mb-10">
-            <h4 className="text-center font-semibold mb-2">Statement</h4>
-            <TransactionTable dncData={dncData} />
-          </div>
-
           {/* PDF Preview & Download */}
           <Dialog>
             <DialogTrigger>
@@ -141,7 +135,7 @@ export default function FosaStatementForm() {
                               sacco={sacco}
                             />
                           }
-                          fileName="Statement.pdf"
+                          fileName={`${member.fullName} Statement`}
                         >
                           {({ loading }) => (
                             <Button disabled={loading}>
@@ -156,6 +150,12 @@ export default function FosaStatementForm() {
               </DialogHeader>
             </DialogContent>
           </Dialog>
+          {/* statment table */}
+          <div className="mt-5 mb-10">
+            <h4 className="text-center font-semibold mb-2">Statement</h4>
+            <TransactionTable dncData={dncData} />
+          </div>
+
         </div>
       )}
     </>

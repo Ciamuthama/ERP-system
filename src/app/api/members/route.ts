@@ -10,11 +10,17 @@ import pool from "../../../lib/db";
 
 export async function GET() {
   try {
+    // Get the next member number
     const [lastMember] = await pool.query("SELECT MAX(memberNo) AS lastMemberNo FROM members");
     const nextMemberNo = lastMember[0]?.lastMemberNo ? lastMember[0].lastMemberNo + 1 : 1001;
-    return NextResponse.json({ nextMemberNo }, { status: 200 });
+
+    // Get all members
+    const [members] = await pool.query("SELECT * FROM members");
+
+    return NextResponse.json({ nextMemberNo, members }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch next member number" }, { status: 500 });
+    console.error("Error in GET:", error);
+    return NextResponse.json({ error: "Failed to fetch members data" }, { status: 500 });
   }
 }
 
@@ -37,9 +43,8 @@ export async function POST(req: Request) {
     `;
     await pool.query(createTableQuery);
 
-   
     const { memId, fullName, telephone, emailAddress, title, accountNumber, openingBalance } = await req.json();
-    
+
     const [lastMember] = await pool.query("SELECT MAX(memberNo) AS lastMemberNo FROM members");
     const nextMemberNo = lastMember[0]?.lastMemberNo ? lastMember[0].lastMemberNo + 1 : 1001;
 
@@ -52,7 +57,6 @@ export async function POST(req: Request) {
     return result.affectedRows === 1
       ? NextResponse.json({ message: "Member created successfully", memberNo: nextMemberNo, accountNumber }, { status: 201 })
       : NextResponse.json({ error: "Failed to create member" }, { status: 500 });
-
   } catch (error) {
     console.error("Error in POST:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

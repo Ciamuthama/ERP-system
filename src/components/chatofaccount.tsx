@@ -98,12 +98,14 @@ export default function ChatOfAccount() {
 
   async function fetchAccounts() {
     try {
-      const response = await fetch("/api/chartofaccount");
-
+      const response = await fetch("/api/chartofaccount", {
+        next: { revalidate: 60 },
+      });
+  
       if (!response.ok) {
         throw new Error("Failed to fetch accounts");
       }
-
+  
       return await response.json();
     } catch (error) {
       console.error("Error fetching accounts:", error);

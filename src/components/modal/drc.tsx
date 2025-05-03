@@ -38,7 +38,7 @@ export function Drc({ data }) {
  
 
   return (
-    <Table className="w-[90%] mx-2">
+    <Table className="w-[90%] mx-2 h-[90%] overflow-scroll">
       <TableHeader>
         <TableRow>
           <TableHead>Date</TableHead>

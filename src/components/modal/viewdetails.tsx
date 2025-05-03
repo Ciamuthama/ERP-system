@@ -22,7 +22,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { getSingleMember } from "@/lib/actions";
+
 
 const formSchema = z.object({
   memId: z.string().min(3, "ID Number is required"),
@@ -31,6 +31,8 @@ const formSchema = z.object({
   emailAddress: z.string().email("Enter a valid email"),
   title: z.string().optional(),
   accountNumber: z.string().optional(),
+  openingBalance: z.string().optional(),
+  
 });
 
 export function DetailView({ memberNo }: { memberNo: string }) {
@@ -39,11 +41,27 @@ export function DetailView({ memberNo }: { memberNo: string }) {
   );
 
   React.useEffect(() => {
-    if (memberNo) {
-      getSingleMember(memberNo).then((data) => {
-        setUser(data);
-      });
+    const controller = new AbortController();
+    async function fetchUser() {
+      try {
+        const res = await fetch(`/api/members/${memberNo}`, {
+          signal: controller.signal,
+          cache: "force-cache", 
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setUser(data);
+        } else {
+          console.error("Error fetching member data:", data);
+        }
+      } catch (error: any) {
+        if (error.name !== "AbortError") {
+          console.error("Error fetching member data:", error);
+        }
+      }
     }
+    fetchUser();
+    return () => controller.abort();
   }, [memberNo]);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -55,10 +73,12 @@ export function DetailView({ memberNo }: { memberNo: string }) {
       emailAddress: user?.emailAddress || "",
       title: user?.title || "",
       accountNumber: user?.accountNumber || "",
+      openingBalance: user?.openingBalance || "",
+     
     },
   });
 
-  async function updateMember( data: unknown) {
+  async function updateMember(data: unknown) {
     try {
       const response = await fetch(`/api/members/${memberNo}`, {
         method: "PUT",
@@ -86,9 +106,6 @@ export function DetailView({ memberNo }: { memberNo: string }) {
   }, [user, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("Submitting form with values:", values); // Debugging log
-
-  
     try {
       const updatedMember = await updateMember(values);
       console.log("Member updated successfully:", updatedMember);
@@ -117,8 +134,6 @@ export function DetailView({ memberNo }: { memberNo: string }) {
               onSubmit={form.handleSubmit(onSubmit)}
               className="space-y-4 px-5"
             >
-              
-
               {/* Full Name */}
               <FormField
                 control={form.control}
@@ -133,7 +148,7 @@ export function DetailView({ memberNo }: { memberNo: string }) {
                 )}
               />
 
-                           <FormField
+              <FormField
                 control={form.control}
                 name="telephone"
                 render={({ field }) => (
@@ -141,6 +156,18 @@ export function DetailView({ memberNo }: { memberNo: string }) {
                     <FormLabel>Telephone</FormLabel>
                     <FormControl>
                       <Input {...field} type="tel" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="memId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID Number</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="number" />
                     </FormControl>
                   </FormItem>
                 )}
@@ -160,7 +187,29 @@ export function DetailView({ memberNo }: { memberNo: string }) {
                 )}
               />
 
-              {/* Account Number (Read-Only) */}
+              <FormField
+                control={form.control}
+                name="openingBalance"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Opening Balance</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        value={new Intl.NumberFormat().format(
+                          Number(field.value.replace(/,/g, "")) || 0
+                        )}
+                        onChange={(e) => {
+                          const rawValue = e.target.value.replace(/,/g, "");
+                          if (/^\d*$/.test(rawValue)) {
+                            field.onChange(rawValue);
+                          }
+                        }}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="accountNumber"

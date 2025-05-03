@@ -6,16 +6,15 @@ import {
   View,
   Image,
   StyleSheet,
-  Font,
 } from "@react-pdf/renderer";
 
-// Define styles
+
 const styles = StyleSheet.create({
-  page: { padding: 20, fontSize: 10, marginHorizontal: "auto", height: "100vh" },
-  headerContainer: { flexDirection: "row", width: "80%" },
-  logo: { width: "20%", height: "auto" },
+  page: { padding: 20, fontSize: 10, marginHorizontal: "auto",height:"75vh", justifyContent:"space-between" },
+  headerContainer: { flexDirection: "row",textAlign:"center", },
+  logo: { width: "12%", height: "auto" },
   title: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 10,
@@ -24,6 +23,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     padding: 10,
     borderBottom: "1px solid #ddd",
+ 
+  },
+  sectionPrice: {
+    marginVertical: 15,
+    padding: 10,
+    borderBottom: "1px solid #ddd",
+    borderTop: "1px solid #ddd",
+ 
   },
   section1: {
     flexDirection: "row",
@@ -31,7 +38,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     padding: 10,
     borderBottom: "1px solid #ddd",
+
   },
+
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -48,18 +57,17 @@ const styles = StyleSheet.create({
   transactionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems:"center",
     borderBottom: "1px solid #ddd",
-    paddingBottom: 3,
-    marginBottom: 3,
+    marginVertical: 5,
   },
-  tableCell: { flex: 1, textAlign: "left",fontSize:8,paddingHorizontal:2 },
+  tableCell: { flex: 1, textAlign: "left",fontSize:8,paddingHorizontal:1,alignItems:"center" ,justifyContent:"center",paddingVertical:5, marginVertical:6 },
   footer: {
-    position: "absolute",
-    bottom: 20,
+    bottom: 0,
     left: 0,
     right: 0,
     textAlign: "center",
-    fontSize: 10,
+    fontSize: 6,
     marginHorizontal: 20,
   },
 });
@@ -74,8 +82,8 @@ export default function FosaStatementPDF({ data, sacco, member }) {
  
   const totalShares = creditTransactions.reduce((acc, txn) => acc + Number(txn.amount), 0);
 
-    const sortedTransactions = [...creditTransactions, ...debitTransactions].sort(
-      (a, b) => new Date(a.date) - new Date(b.date)
+  const sortedTransactions = [...data].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
     
     let runningBalance = Number(member.openingBalance) || 0;
@@ -100,30 +108,33 @@ export default function FosaStatementPDF({ data, sacco, member }) {
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
-        {/* SACCO Logo & Details */}
+      <Page size="A4" wrap style={styles.page}>
+    <View>
+
         <View style={styles.headerContainer}>
-          {sacco[0].logo && <Image src={sacco[0].logo} style={styles.logo} />}
-          <View
-            style={{
-              alignItems: "center",
-              textAlign: "center",
-              marginHorizontal: "auto",
-            }}
-          >
-            <Text style={styles.title}>{sacco[0].companyName}</Text>
-            <Text>{sacco[0].email}</Text>
-            <Text>
-              {sacco[0].address}
-            </Text>
-            <Text >{sacco[0].telephone}</Text>
-          </View>
+          {sacco &&
+            sacco.map((item, index) =>
+              item ? (
+                <React.Fragment key={index}>
+                  {item.logo && <Image src={item.logo} style={styles.logo} />}
+                  <View
+                    style={{
+                      alignItems: "center",
+                      textAlign: "center",
+                      marginHorizontal: 9,
+                    }}
+                  >
+                    <Text style={styles.title}>{item.companyName}</Text>
+                    <Text>{item.email}</Text>
+                    <Text>{item.address}</Text>
+                    <Text>{item.telephone}</Text>
+                  </View>
+                </React.Fragment>
+              ) : null
+            )}
         </View>
 
-        {/* Statement Title */}
-        <Text style={styles.title}>Account Statement</Text>
-
-        {/* Member Info */}
+      <Text style={styles.title}>Account Statement</Text>
         <View style={styles.section1}>
           <View>
             <Text>Member Name: {member.fullName}</Text>
@@ -193,16 +204,17 @@ export default function FosaStatementPDF({ data, sacco, member }) {
           )}
         </View>
 
-        {/* Shares Calculation */}
-        <View style={styles.section}>
-          <Text>Total Credits: KSh {totalShares.toLocaleString()}.00</Text>
-          <Text>Total Loan: KSH {totalLoan.toLocaleString()}.00</Text>
-        </View>
-        <View>
-          <Text style={{ textAlign: "center" }}>Print Date: {printedDate}</Text>
+        
+          <View style={styles.sectionPrice}>
+            <Text>Total Credits: KSh {totalShares.toLocaleString()}.00</Text>
+            <Text>Total Loan: KSH {totalLoan.toLocaleString()}.00</Text>
+          </View>
+          <View>
+            <Text style={{ textAlign: "center", fontSize:6 }}>Print Date: {printedDate}</Text>
+          </View>
         </View>
 
-        <View style={styles.footer}>
+        <View style={styles.footer} fixed>
           <Text>
             Failing receipt by the FOSA within 15 days from the day of dispatch
             of this statement with notice of the disagreement with any of the

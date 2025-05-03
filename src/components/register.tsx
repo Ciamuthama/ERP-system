@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import * as React from "react";
@@ -124,10 +125,38 @@ export function Register() {
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
   const [data, setData] = React.useState([]);
+  const [loading,setLoading] = React.useState(true)
 
-  React.useEffect(() => {
-    getMember().then((data) => setData(data));
+  
+React.useEffect(() => {
+    const controller = new AbortController();
+    async function fetchUser() {
+      try {
+        const res = await fetch(`/api/members/`, {
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setData(data.members);
+        } else {
+          console.error("Error fetching member data:", data);
+        }
+      } catch (error: any) {
+        if (error.name !== "AbortError") {
+          console.error("Error fetching member data:", error);
+        }
+      }
+      finally{
+        setLoading(false);
+      }
+    }
+    fetchUser();
+    return () => controller.abort();
   }, []);
+  
+
+ 
+  
 
   const table = useReactTable({
     data,
@@ -147,6 +176,7 @@ export function Register() {
       rowSelection,
     },
   });
+  if(loading) return <p>Loading...</p>
 
   return (
     <div className="w-full">
