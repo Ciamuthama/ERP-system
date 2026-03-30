@@ -4,23 +4,6 @@ import pool from "../../../lib/db";
 
 export async function POST(req: Request) {
     try {
-        // Ensure the table exists
-        const createTableQuery = `
-            CREATE TABLE IF NOT EXISTS dnc (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                type VARCHAR(255) NOT NULL,
-                accountNumber VARCHAR(50) NOT NULL,
-                fullName VARCHAR(255) NOT NULL,
-                memberNo VARCHAR(50) NOT NULL,
-                amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-                description TEXT DEFAULT NULL,
-                transactionType VARCHAR(255) DEFAULT NULL,
-                date  DATE NOT NULL,
-                createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `;
-        await pool.query(createTableQuery);
-
         // Parse request body
         const body = await req.json();
         const { accountNumber, fullName, memberNo, type, amount, description,transactionType,date } = body;

@@ -1,14 +1,20 @@
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable prefer-const */
 //ts-ignore
 
 "use server";
 
 import { NextResponse } from "next/server";
 import pool from "../../../lib/db";
+import { cookies } from "next/headers";
 
 export async function GET() {
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get("session_token")?.value;
+
+  if (!sessionToken) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     // Get the next member number
     const [lastMember] = await pool.query("SELECT MAX(memberNo) AS lastMemberNo FROM members");
@@ -25,24 +31,14 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  try {
-    // Ensure the "members" table exists
-    const createTableQuery = `
-      CREATE TABLE IF NOT EXISTS members (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        memberNo INT NOT NULL UNIQUE,
-        memId VARCHAR(50) NOT NULL UNIQUE,
-        title VARCHAR(100) DEFAULT NULL,
-        fullName VARCHAR(255) NOT NULL,
-        telephone VARCHAR(20) NOT NULL,
-        accountNumber VARCHAR(50) NOT NULL UNIQUE,
-        openingBalance DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-        emailAddress VARCHAR(255) DEFAULT NULL,
-        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `;
-    await pool.query(createTableQuery);
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get("session_token")?.value;
 
+  if (!sessionToken) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
     const { memId, fullName, telephone, emailAddress, title, accountNumber, openingBalance } = await req.json();
 
     const [lastMember] = await pool.query("SELECT MAX(memberNo) AS lastMemberNo FROM members");

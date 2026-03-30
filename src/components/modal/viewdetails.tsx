@@ -54,8 +54,8 @@ export function DetailView({ memberNo }: { memberNo: string }) {
         } else {
           console.error("Error fetching member data:", data);
         }
-      } catch (error: any) {
-        if (error.name !== "AbortError") {
+      } catch (error: unknown) {
+        if (error instanceof Error && error.name !== "AbortError") {
           console.error("Error fetching member data:", error);
         }
       }

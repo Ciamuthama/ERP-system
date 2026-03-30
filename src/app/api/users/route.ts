@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable prefer-const */
 //ts-ignore
 
 "use server";
@@ -7,7 +6,7 @@ import { NextResponse } from "next/server";
 import pool from "../../../lib/db";
 import path from "path";
 import fs from "fs";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
     try {
@@ -55,7 +54,7 @@ export async function POST(req: Request) {
 
 export async function GET() {
   try {
-    const [rows] = await pool.query("SELECT id, name, fullName, email, telephone, profile, created_at,session_token FROM users");
+    const [rows] = await pool.query("SELECT id, name, fullName, email, telephone, profile, created_at FROM users");
     return NextResponse.json(rows, { status: 200 });
   } catch (error) {
     console.error("Error fetching users:", error);

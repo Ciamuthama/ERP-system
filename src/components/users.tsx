@@ -3,8 +3,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import Image from "next/image";
 import { EyeSlashIcon, EyeIcon } from "@heroicons/react/24/solid";
-import { Toaster } from "./ui/sonner";
 import { toast } from "sonner";
+import { Toaster } from "react-hot-toast";
 
 import {
   Table,
@@ -16,12 +16,9 @@ import {
 } from "@/components/ui/table";
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
-  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
 } from "@/components/ui/drawer";
 import {
   Form,
@@ -87,9 +84,10 @@ export function Users() {
     },
   });
 
+  const resetForm = form.reset;
   useEffect(() => {
     if (user) {
-      form.reset({
+      resetForm({
         name: user.name,
         profile: user.profile,
         password: user.password,
@@ -99,11 +97,24 @@ export function Users() {
       });
       setUserPreview(user.profile || null);
     }
-  }, [user, form]);
+  }, [user, resetForm]);
 
   const handleRowClick = (selectedUser: User) => {
     setUser(selectedUser);
     setIsDrawerOpen(true);
+  };
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/users");
+      const data = await response.json();
+      setUserData(data);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const submitUser = async (data: z.infer<typeof formSchema>) => {
@@ -136,13 +147,13 @@ export function Users() {
       form.reset();
       setUserPreview(null);
       setIsDrawerOpen(false);
+      fetchData();
     } catch (error) {
       console.error("Error saving user settings:", error);
       alert("Failed to save user settings.");
     } finally {
       setLoading(false);
     }
-    window.location.reload();
   };
 
   const deleteUser = async (userId: string) => {
@@ -158,13 +169,13 @@ export function Users() {
 
       setUserData((prev) => prev.filter((user) => user.id !== userId));
       toast("User deleted successfully!");
+      setIsDrawerOpen(false);
     } catch (error) {
       console.error("Error deleting user:", error);
       alert("Failed to delete user.");
     } finally {
       setLoading(false);
     }
-    window.location.reload();
   };
 
   const handleUserImage = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -201,6 +212,7 @@ export function Users() {
                     <img
                       title="profile"
                       src={item.profile}
+                      alt={item.fullName}
                       className="w-10 h-10 rounded-full object-center"
                     />
                   </TableCell>

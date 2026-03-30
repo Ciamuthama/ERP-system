@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import LoginPage from "@/components/login"; 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
@@ -9,25 +8,23 @@ import { useSessionMonitor } from "@/hooks/checkSession";
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const router = useRouter();
   useSessionMonitor()
 
 
   useEffect(() => {
-    const checkAuth = () => {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        if (parsedUser.expiry && Date.now() < parsedUser.expiry) {
-          setIsAuthenticated(true);
-        } else {
-          localStorage.removeItem("user");
-          setIsAuthenticated(false);
-          router.push("/login");
+    const checkAuth = async () => {
+        try {
+            const res = await fetch("/api/users/login/check", { cache: "no-store" });
+            if (res.ok) {
+                setIsAuthenticated(true);
+            } else {
+                localStorage.removeItem("user");
+                setIsAuthenticated(false);
+            }
+        } catch (error) {
+            console.error("Auth check failed:", error);
+            setIsAuthenticated(false);
         }
-      } else {
-        setIsAuthenticated(false);
-      }
     };
 
     checkAuth();

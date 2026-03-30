@@ -58,8 +58,13 @@ export default function LoginPage() {
         return;
       }
   
+      interface UserRecord {
+        name: string;
+        id: string;
+        session_token?: string;
+      }
       const allUsers = await usersRes.json();
-      const targetUser = allUsers.find((user: any) => user.name === values.name);
+      const targetUser = allUsers.find((user: UserRecord) => user.name === values.name);
     
       
       
