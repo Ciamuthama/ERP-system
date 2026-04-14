@@ -17,7 +17,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -107,7 +106,6 @@ export default function SaccoCompanyForm() {
     } finally {
       setLoading(false);
     }
-    window.location.reload()
   };
 
   const submitUser = async (data: z.infer<typeof userSchema>) => {
@@ -143,7 +141,6 @@ export default function SaccoCompanyForm() {
     } finally {
       setLoading(false);
     }
-    window.location.reload()
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {

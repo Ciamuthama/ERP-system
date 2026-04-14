@@ -77,7 +77,6 @@ export default function FosaStatementPDF({ data, sacco, member }) {
 
   // Filter credit and debit transactions
   const creditTransactions = data.filter((txn) => txn.type === "credit");
-  const debitTransactions = data.filter((txn) => txn.type === "debit");
 
  
   const totalShares = creditTransactions.reduce((acc, txn) => acc + Number(txn.amount), 0);
@@ -116,7 +115,7 @@ export default function FosaStatementPDF({ data, sacco, member }) {
             sacco.map((item, index) =>
               item ? (
                 <React.Fragment key={index}>
-                  {item.logo && <Image src={item.logo} style={styles.logo} />}
+                  {item.logo && <Image src={item.logo} style={styles.logo} alt="Logo" />}
                   <View
                     style={{
                       alignItems: "center",

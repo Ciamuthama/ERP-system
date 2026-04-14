@@ -6,7 +6,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useEffect } from "react";
 
 export function Drc({ data }) {
   const sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));

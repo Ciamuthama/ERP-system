@@ -35,7 +35,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DetailView } from "./modal/viewdetails";
-import { getMember } from "@/lib/actions";
 import { Member } from "@/lib/types";
 
 export const columns: ColumnDef<Member>[] = [

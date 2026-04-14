@@ -4,10 +4,6 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
-interface User{
-  name: string
-}
-
 export function useSessionMonitor() {
   const router = useRouter();
   const hasLoggedOut = useRef(false);
@@ -15,21 +11,14 @@ export function useSessionMonitor() {
 
   useEffect(() => {
     const interval = setInterval(async () => {
-      const storedUser = localStorage.getItem("user");
-      if (!storedUser || hasLoggedOut.current) return;
-
-      const parsedUser = JSON.parse(storedUser);
-      const name = parsedUser?.name;
+      if (hasLoggedOut.current) return;
 
       try {
-        const res = await fetch("/api/users", {
-          headers: { "Content-Type": "application/json" },
+        const res = await fetch("/api/users/login/check", {
+          cache: "no-store",
         });
 
-        const users = await res.json();
-        const user = users.find((u: User) => u.name === name);
-
-        if (!user || user.session_token === null) {
+        if (!res.ok) {
           hasLoggedOut.current = true;
 
           toast.error("⚠️ Your session was ended.");
@@ -39,7 +28,7 @@ export function useSessionMonitor() {
       } catch (error) {
         console.error("Session check failed:", error);
       }
-    }, 2000); 
+    }, 60000); // Polling every 60 seconds instead of 2
 
     return () => clearInterval(interval);
   }, [router]);

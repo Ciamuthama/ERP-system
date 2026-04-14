@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { set, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,11 +80,7 @@ export default function ChatOfAccount() {
       const responseData = await response.json();
       if (!response.ok) {
         console.error("API Error:", responseData.error);
-        return;
-      }
-      if (!response.ok) {
-        const data: { error?: string } = await res.json();
-        setError(data.error || "Invalid login credentials");
+        setError(responseData.error || "Failed to create account");
         return;
       }
       setSuccessMessage("Account created!");
