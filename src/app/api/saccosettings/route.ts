@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable prefer-const */
 //ts-ignore
 
 "use server";
@@ -7,17 +8,27 @@ import { NextRequest, NextResponse } from "next/server";
 import pool from "../../../lib/db";
 import path from "path";
 import fs from "fs/promises";
-import { cookies } from "next/headers";
+
+// Ensure the table exists
+async function ensureTableExists() {
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS sacco_company (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        companyName VARCHAR(255) NOT NULL,
+        address VARCHAR(255) NOT NULL,
+        logo VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        telephone VARCHAR(20) NOT NULL,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `;
+  await pool.query(createTableQuery);
+}
 
 export async function POST(req: NextRequest) {
-  const cookieStore = await cookies();
-  const sessionToken = cookieStore.get("session_token")?.value;
-
-  if (!sessionToken) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    await ensureTableExists();
+
     const formData = await req.formData();
     const companyName = formData.get("companyName") as string;
     const address = formData.get("address") as string;
@@ -77,14 +88,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  const cookieStore = await cookies();
-  const sessionToken = cookieStore.get("session_token")?.value;
-
-  if (!sessionToken) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    await ensureTableExists();
     const [rows]: any[] = await pool.query("SELECT * FROM sacco_company LIMIT 1");
 
     if (rows.length === 0) {

@@ -17,8 +17,8 @@ type FetchedUser = {
 export default function Dashboard({}) {
 
   const router = useRouter();
-  const [user, setUser] = useState<FetchedUser | null>(null);
-  const [fetchedUser, setFetchedUser] = useState<FetchedUser[]>([]);
+  const [user, setUser] = useState<any>(null);
+  const [fetchedUser, setFetchedUser] = useState([]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");

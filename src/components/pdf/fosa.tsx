@@ -6,15 +6,16 @@ import {
   View,
   Image,
   StyleSheet,
+  Font,
 } from "@react-pdf/renderer";
 
-
+// Define styles
 const styles = StyleSheet.create({
-  page: { padding: 20, fontSize: 10, marginHorizontal: "auto",height:"75vh", justifyContent:"space-between" },
-  headerContainer: { flexDirection: "row",textAlign:"center", },
-  logo: { width: "12%", height: "auto" },
+  page: { padding: 20, fontSize: 10, marginHorizontal: "auto", height: "100vh" },
+  headerContainer: { flexDirection: "row", width: "80%" },
+  logo: { width: "20%", height: "auto" },
   title: {
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 10,
@@ -23,14 +24,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     padding: 10,
     borderBottom: "1px solid #ddd",
- 
-  },
-  sectionPrice: {
-    marginVertical: 15,
-    padding: 10,
-    borderBottom: "1px solid #ddd",
-    borderTop: "1px solid #ddd",
- 
   },
   section1: {
     flexDirection: "row",
@@ -38,9 +31,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     padding: 10,
     borderBottom: "1px solid #ddd",
-
   },
-
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -57,17 +48,18 @@ const styles = StyleSheet.create({
   transactionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems:"center",
     borderBottom: "1px solid #ddd",
-    marginVertical: 5,
+    paddingBottom: 3,
+    marginBottom: 3,
   },
-  tableCell: { flex: 1, textAlign: "left",fontSize:8,paddingHorizontal:1,alignItems:"center" ,justifyContent:"center",paddingVertical:5, marginVertical:6 },
+  tableCell: { flex: 1, textAlign: "left",fontSize:8,paddingHorizontal:2 },
   footer: {
-    bottom: 0,
+    position: "absolute",
+    bottom: 20,
     left: 0,
     right: 0,
     textAlign: "center",
-    fontSize: 6,
+    fontSize: 10,
     marginHorizontal: 20,
   },
 });
@@ -77,12 +69,14 @@ export default function FosaStatementPDF({ data, sacco, member }) {
 
   // Filter credit and debit transactions
   const creditTransactions = data.filter((txn) => txn.type === "credit");
+  const debitTransactions = data.filter((txn) => txn.type === "debit");
 
- 
-  const totalShares = creditTransactions.reduce((acc, txn) => acc + Number(txn.amount), 0);
+  // Calculate total shares (sum of credit transactions / 4)
+  const totalShares =
+    creditTransactions.reduce((acc, txn) => acc + Number(txn.amount), 0) / 4;
 
-  const sortedTransactions = [...data].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    const sortedTransactions = [...creditTransactions, ...debitTransactions].sort(
+      (a, b) => new Date(a.date) - new Date(b.date)
     );
     
     let runningBalance = Number(member.openingBalance) || 0;
@@ -96,9 +90,10 @@ export default function FosaStatementPDF({ data, sacco, member }) {
     });
     
 
-  const totalLoan = creditTransactions
-    .filter((txn) => txn.description.includes("Education Loan"))
-    .reduce((acc, txn) => acc + Number(txn.amount), 0);
+  const totalLoan = creditTransactions.reduce(
+    (acc, txn) => acc + Number(txn.amount),
+    0
+  );
 
   // Get Printed Date
   const printedDate = new Date().toLocaleString("en-KE", {
@@ -107,33 +102,30 @@ export default function FosaStatementPDF({ data, sacco, member }) {
 
   return (
     <Document>
-      <Page size="A4" wrap style={styles.page}>
-    <View>
-
+      <Page size="A4" style={styles.page}>
+        {/* SACCO Logo & Details */}
         <View style={styles.headerContainer}>
-          {sacco &&
-            sacco.map((item, index) =>
-              item ? (
-                <React.Fragment key={index}>
-                  {item.logo && <Image src={item.logo} style={styles.logo} alt="Logo" />}
-                  <View
-                    style={{
-                      alignItems: "center",
-                      textAlign: "center",
-                      marginHorizontal: 9,
-                    }}
-                  >
-                    <Text style={styles.title}>{item.companyName}</Text>
-                    <Text>{item.email}</Text>
-                    <Text>{item.address}</Text>
-                    <Text>{item.telephone}</Text>
-                  </View>
-                </React.Fragment>
-              ) : null
-            )}
+          {sacco[0].logo && <Image src={sacco[0].logo} style={styles.logo} />}
+          <View
+            style={{
+              alignItems: "center",
+              textAlign: "center",
+              marginHorizontal: "auto",
+            }}
+          >
+            <Text style={styles.title}>{sacco[0].companyName}</Text>
+            <Text>{sacco[0].email}</Text>
+            <Text>
+              {sacco[0].address}
+            </Text>
+            <Text >{sacco[0].telephone}</Text>
+          </View>
         </View>
 
-      <Text style={styles.title}>Account Statement</Text>
+        {/* Statement Title */}
+        <Text style={styles.title}>Account Statement</Text>
+
+        {/* Member Info */}
         <View style={styles.section1}>
           <View>
             <Text>Member Name: {member.fullName}</Text>
@@ -171,7 +163,7 @@ export default function FosaStatementPDF({ data, sacco, member }) {
             transactionsWithBalance.map((txn, index) => (
               <View key={index} style={styles.transactionRow}>
                 <Text style={styles.tableCell}>
-                  {new Date(txn.date).toLocaleDateString("en-KE")}
+                  {new Date(txn.date).toLocaleDateString()}
                 </Text>
                 <Text style={styles.tableCell}>{txn.description} {txn.transactionType}</Text>
                 <Text style={styles.tableCell}>
@@ -203,17 +195,16 @@ export default function FosaStatementPDF({ data, sacco, member }) {
           )}
         </View>
 
-        
-          <View style={styles.sectionPrice}>
-            <Text>Total Credits: KSh {totalShares.toLocaleString()}.00</Text>
-            <Text>Total Loan: KSH {totalLoan.toLocaleString()}.00</Text>
-          </View>
-          <View>
-            <Text style={{ textAlign: "center", fontSize:6 }}>Print Date: {printedDate}</Text>
-          </View>
+        {/* Shares Calculation */}
+        <View style={styles.section}>
+          <Text>Total Shares: KSh {totalShares.toLocaleString()}.00</Text>
+          <Text>Total Loan: KSH {totalLoan.toLocaleString()}.00</Text>
+        </View>
+        <View>
+          <Text style={{ textAlign: "center" }}>Print Date: {printedDate}</Text>
         </View>
 
-        <View style={styles.footer} fixed>
+        <View style={styles.footer}>
           <Text>
             Failing receipt by the FOSA within 15 days from the day of dispatch
             of this statement with notice of the disagreement with any of the

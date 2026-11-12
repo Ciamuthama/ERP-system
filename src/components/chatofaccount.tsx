@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { set, useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,7 +80,11 @@ export default function ChatOfAccount() {
       const responseData = await response.json();
       if (!response.ok) {
         console.error("API Error:", responseData.error);
-        setError(responseData.error || "Failed to create account");
+        return;
+      }
+      if (!response.ok) {
+        const data: { error?: string } = await res.json();
+        setError(data.error || "Invalid login credentials");
         return;
       }
       setSuccessMessage("Account created!");
@@ -94,14 +98,12 @@ export default function ChatOfAccount() {
 
   async function fetchAccounts() {
     try {
-      const response = await fetch("/api/chartofaccount", {
-        next: { revalidate: 60 },
-      });
-  
+      const response = await fetch("/api/chartofaccount");
+
       if (!response.ok) {
         throw new Error("Failed to fetch accounts");
       }
-  
+
       return await response.json();
     } catch (error) {
       console.error("Error fetching accounts:", error);

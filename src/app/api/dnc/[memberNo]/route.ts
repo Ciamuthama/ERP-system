@@ -1,8 +1,10 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable prefer-const */
+//ts-ignore
 "use server";
-
 import { NextResponse } from "next/server";
-import pool from "../../../../lib/db";
+import pool  from "../../../../lib/db";
+
 
 export async function GET({ params }) {
   try {
@@ -21,3 +23,4 @@ export async function GET({ params }) {
   }
 }
 
+  

@@ -22,11 +22,12 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Drc } from "./modal/drc";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { Checkbox } from "./ui/checkbox";
 import { creditTypes, debitTypes } from "@/app/data/transactions";
 
@@ -46,7 +47,9 @@ export function DebitCreditCards() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [loanChecked, setLoanChecked] = useState(false);
+  const [loanNumber, setLoanNumber] = useState<string | null>(null);
   const [currentBalance, setCurrentBalance] = useState(0);
+  const [debitLimit, setDebitLimit] = useState(0);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -64,6 +67,8 @@ export function DebitCreditCards() {
 
   const generateLoanNumber = () => {
     const value = Math.floor(100000 + Math.random() * 900000).toString();
+    setLoanNumber(value);
+
     form.setValue("description", `Education Loan #${value}`);
   };
 
@@ -72,6 +77,7 @@ export function DebitCreditCards() {
     if (checked) {
       generateLoanNumber();
     } else {
+      setLoanNumber(null);
       form.setValue("description", "");
     }
   };
@@ -123,17 +129,15 @@ export function DebitCreditCards() {
 
 
 
-  const amount = form.watch("amount");
-  const type = form.watch("type");
-
   useEffect(() => {
-    if (type === "debit") {
-      const enteredAmount = Number(amount) || 0;
+    if (form.watch("type") === "debit") {
+      const enteredAmount = Number(form.watch("amount")) || 0;
+      setDebitLimit(currentBalance);
       if (enteredAmount > currentBalance) {
         alert(`Insufficient balance! Maximum debit allowed: ${currentBalance}`);
       }
     }
-  }, [amount, type, currentBalance]);
+  }, [form.watch("amount"), form.watch("type"), currentBalance]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const enteredAmount = Number(values.amount);
@@ -152,6 +156,7 @@ export function DebitCreditCards() {
       if (response.ok) {
         form.reset();
         setLoanChecked(false);
+        setLoanNumber(null);
       } else {
         console.error("Failed to save data");
       }
@@ -172,11 +177,6 @@ export function DebitCreditCards() {
               placeholder="Search Member Number"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  searchMember();
-                }
-              }}
             />
             <Button onClick={searchMember} disabled={loading}>
               {loading ? "Searching..." : "Search"}

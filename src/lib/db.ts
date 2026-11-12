@@ -1,10 +1,10 @@
 import mysql from "mysql2/promise";
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || "127.0.0.1",
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "password",
-  database: process.env.DB_NAME || "database",
+  host: "127.0.0.1",
+  user: "root",
+  password: "123456",
+  database: "sacco_db",
   waitForConnections: true,
   connectionLimit: 10, 
   queueLimit: 0,
